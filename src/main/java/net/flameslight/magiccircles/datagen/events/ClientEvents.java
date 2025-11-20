@@ -1,9 +1,9 @@
 package net.flameslight.magiccircles.datagen.events;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import io.redspace.ironsspellbooks.api.events.SpellCastEvent;
 import net.flameslight.magiccircles.MagicCircles;
-import net.flameslight.magiccircles.datagen.MagicCircleRenderer;
-import net.flameslight.magiccircles.datagen.logger.ModLogger;
+import net.flameslight.magiccircles.datagen.MagicCircleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.player.Player;
@@ -11,6 +11,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -21,19 +22,17 @@ public class ClientEvents {
     @SubscribeEvent
     public static void onEntityLeaveLevel(EntityLeaveLevelEvent event) {
         if (event.getLevel().isClientSide && event.getEntity() instanceof Player player) {
-            MagicCircleRenderer.handlePlayerLeaving(player);
+            MagicCircleManager.handlePlayerLeaving(player);
         }
     }
 
     @SubscribeEvent
     public static void onClientLogout(ClientPlayerNetworkEvent.LoggingOut event) {
-        MagicCircleRenderer.handleClientLeaving();
+        MagicCircleManager.handleClientLeaving();
     }
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
-        ModLogger.info("onRenderLevel called");
-
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
 
         Minecraft mc = Minecraft.getInstance();
@@ -43,8 +42,13 @@ public class ClientEvents {
         MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
 
         // Render for all players
-        for (Player player : mc.level.players()) {
-            MagicCircleRenderer.renderMagicCircleForPlayer(player, poseStack, bufferSource, event.getPartialTick());
+        MagicCircleManager.renderMagicCircleForClient(poseStack, bufferSource, event.getPartialTick());
+    }
+
+    @SubscribeEvent
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            MagicCircleManager.handleOnClientTick();
         }
     }
 }
