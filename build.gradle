@@ -3,7 +3,7 @@ plugins {
     id 'idea'
     id 'maven-publish'
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
-    id 'org.spongepowered.mixin' version '0.7.+'
+//    id 'org.spongepowered.mixin' version '0.7.+'
 }
 
 version = mod_version
@@ -128,6 +128,8 @@ repositories {
             includeGroup "curse.maven"
         }
     }
+
+    maven { url = "https://maven.blamejared.com/" } // Patchouli/Geckolib fallback
 }
 
 configurations {
@@ -156,22 +158,20 @@ dependencies {
 
     // https://mvnrepository.com/artifact/com.googlecode.json-simple/json-simple
 //    minecraftLibrary fg.deobf("com.googlecode.json-simple:json-simple:1.1.1")
-    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+//    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
-    /*implementation fg.deobf("curse.maven:ftb-quests-forge-289412:6431737")
-    implementation fg.deobf("curse.maven:ftb-teams-forge-404468:6130786")
-    implementation fg.deobf("curse.maven:ftb-library-forge-404465:6807424")
-    implementation fg.deobf("curse.maven:architectury-419699:5137938")*/
-
+    // Mandatory Dependencies for ISS
+    // Iron's Spells 'n Spellbooks (Project ID: 855414)
+    implementation fg.deobf("curse.maven:irons-spells-n-spellbooks-855414:5141334")
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
 }
 
-mixin {
+/*mixin {
     add sourceSets.main, "${mod_id}.refmap.json"
     config "${mod_id}.mixins.json"
-}
+}*/
 
 // This block of code expands all declared replace properties in the specified resource targets.
 // A missing property will result in an error. Properties are expanded using ${} Groovy notation.
