@@ -18,9 +18,9 @@ public class MagicCircleFactory {
             new ResourceLocation("magiccircles", "textures/circle_5.png")
     };
 
-    private static final float[] SIZES_BY_INDEX = new float[]{0.8f, 1.6f, 1.9f, 20f, 30f};
+    private static final float[] SIZES_BY_INDEX = new float[]{1.4f, 2.4f, 2.7f, 20f, 30f};
 
-    private static final ResourceLocation STATIC_CIRCLE = new ResourceLocation("magiccircles", "textures/static_circle.png");
+//    private static final ResourceLocation STATIC_CIRCLE = new ResourceLocation("magiccircles", "textures/static_circle.png");
 
     public static MagicCircleData buildMagicCircleData(String spellName,
                                                        LivingEntity caster,
@@ -50,7 +50,7 @@ public class MagicCircleFactory {
         } else {
             // infront of entity ---
             isPlacedOnGroundElseViewFaced = false;
-            zOffset = 1.3f;
+            zOffset = 1.5f;
             xOffset = -0.22f;
             yOffset = caster.getEyeHeight() - 0.2f;
         }

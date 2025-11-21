@@ -9,8 +9,8 @@ import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.spells.CastType;
 import io.redspace.ironsspellbooks.api.spells.SpellData;
 import io.redspace.ironsspellbooks.player.ClientMagicData;
-import net.flameslight.magiccircles.datagen.logger.ModLogger;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -42,15 +42,23 @@ public class MagicCircleManager {
         CIRCLES_BY_ENTITY.clear();
     }
 
+    public static void handleEntityLeavingLevel(LivingEntity livingEntity) {
+        ArrayList<MagicCircleData> magicCircles = CIRCLES_BY_ENTITY.get(livingEntity);
+
+        if(magicCircles != null)
+            magicCircles.forEach(magicCircle -> magicCircle.startFadeInElseOut(false, FADE_TICKS));
+    }
+
     public static void handleOnClientTick() {
         Minecraft mc = Minecraft.getInstance();
+        ClientLevel level = mc.level;
 
-        if(mc.level == null)
+        if(level == null)
             return;
 
         updateMagicCirclesPerTick();
 
-        for (Entity entity : mc.level.entitiesForRendering()) {
+        for (Entity entity : level.entitiesForRendering()) {
             if (entity instanceof LivingEntity livingEntity) {
                 updateMagicCircleState(livingEntity);
             }
@@ -122,7 +130,7 @@ public class MagicCircleManager {
                     && currentActiveCircle.castedSpellName.equals(usedSpellName);
 
             // Is the cast belong to currently displayed magic circle
-            if (!isMagicCircleRenderedForSpell) {
+            if(!isMagicCircleRenderedForSpell) {
                 // Case B: New cast or properties changed.
 
                 // 1. Fade out the old active circle (if one exists and isn't already fading out)

@@ -2,16 +2,21 @@ package net.flameslight.magiccircles.datagen.events;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import io.redspace.ironsspellbooks.api.events.SpellCastEvent;
+import io.redspace.ironsspellbooks.api.magic.MagicData;
 import net.flameslight.magiccircles.MagicCircles;
 import net.flameslight.magiccircles.datagen.MagicCircleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -50,5 +55,13 @@ public class ClientEvents {
         if (event.phase == TickEvent.Phase.END) {
             MagicCircleManager.handleOnClientTick();
         }
+    }
+
+    @SubscribeEvent
+    public static void onEntityLeavingLevel(EntityLeaveLevelEvent event) {
+        Entity entity = event.getEntity();
+
+        if(entity instanceof LivingEntity livingEntity)
+            MagicCircleManager.handleEntityLeavingLevel(livingEntity);
     }
 }
