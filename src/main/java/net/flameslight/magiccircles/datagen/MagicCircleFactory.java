@@ -10,6 +10,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 
 public class MagicCircleFactory {
+    @SuppressWarnings("removal")
     private static final ResourceLocation[] TEXTURES_PER_SIZE = new ResourceLocation[]{
             new ResourceLocation("magiccircles", "textures/circle_1.png"),
             new ResourceLocation("magiccircles", "textures/circle_2.png"),

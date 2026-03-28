@@ -1,6 +1,7 @@
 package net.flameslight.magiccircles;
 
 import com.mojang.logging.LogUtils;
+import net.flameslight.magiccircles.datagen.logger.ModLogger;
 import net.minecraftforge.fml.common.Mod;
 import org.slf4j.Logger;
 
