@@ -1,25 +1,19 @@
 package net.flameslight.magiccircles.datagen;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.mojang.math.Axis;
 import io.redspace.ironsspellbooks.api.registry.SpellRegistry;
 import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.spells.CastType;
 import io.redspace.ironsspellbooks.capabilities.magic.SyncedSpellData;
 import io.redspace.ironsspellbooks.player.ClientMagicData;
+import net.flameslight.magiccircles.datagen.render.MagicCirclesRender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.phys.Vec3;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import org.joml.Matrix4f;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,7 +25,6 @@ public class MagicCircleManager {
     private static final Map<LivingEntity, ArrayList<MagicCircleData>> CIRCLES_BY_ENTITY = new HashMap<>();
     private static final int FADE_TICKS = 5;
     private static final int TICKS_DELAY_FOR_CHANGE = 2;
-    private static final int MIN_TICKS_FOR_CIRCLE = 8;
     private static int ticksCounter = TICKS_DELAY_FOR_CHANGE;
 
     public static void handlePlayerLeaving(Player player) {
@@ -82,7 +75,7 @@ public class MagicCircleManager {
 
                 // Only render if the circle is visible (not concealed)
                 if (!magicCircleData.isConcealed()) {
-                    renderMagicCircleForClient(livingEntity, magicCircleData, poseStack, bufferSource, partialTick);
+                    MagicCirclesRender.renderCircleForClient(livingEntity, magicCircleData, poseStack, bufferSource, partialTick);
                 }
             }
         });
@@ -96,6 +89,13 @@ public class MagicCircleManager {
 
             String spellId = ClientMagicData.getCastingSpellId();
             AbstractSpell spell = SpellRegistry.getSpell(spellId);
+            int spellLevel = ClientMagicData.getCastingSpellLevel();
+            int castDuration = spell.getCastTime(spellLevel);
+            CastType castType = spell.getCastType();
+
+            if(isShortCastSpell(castDuration, castType))
+                return null;
+
             return new CastInfo(spell, ClientMagicData.getCastDuration());
         }
 
@@ -120,11 +120,19 @@ public class MagicCircleManager {
         CastType castType = spell.getCastType();
         int castDuration = spell.getCastTime(spellLevel);
 
+        //Debug
+//        ModLogger.info("castType: ", castType);
+//        ModLogger.info("castDuration: ", castDuration);
+
         // Filter spells that are cast immediately
-        if (castType == CastType.INSTANT || castDuration <= FADE_TICKS)
+        if (isShortCastSpell(castDuration, castType))
             return null;
 
         return new CastInfo(spell, castDuration);
+    }
+
+    private static boolean isShortCastSpell(int castDuration, CastType castType) {
+        return castType == CastType.INSTANT || castDuration <= FADE_TICKS;
     }
 
     private static void updateMagicCircleState(LivingEntity entity) {
@@ -145,7 +153,7 @@ public class MagicCircleManager {
 
             // Is the cast belong to currently displayed magic circle
             if (!isMagicCircleRenderedForSpell) {
-                // Case B: New cast or properties changed.
+                // New cast or properties changed.
 
                 // 1. Fade out the old active circle (if one exists and isn't already fading out)
                 if (currentActiveCircle != null && !currentActiveCircle.isFadingOut()) {
@@ -166,79 +174,13 @@ public class MagicCircleManager {
                 entityCircles.add(newCircle);
             }
         } else {
-            // Case C: Casting finished/interrupted. Fade out ALL circles that are not concealed.
+            // Casting finished/interrupted. Fade out ALL circles that are not concealed.
             for (MagicCircleData circle : entityCircles) {
                 if (!circle.isConcealed() && !circle.isFadingOut()) {
                     circle.startFadeInElseOut(false, FADE_TICKS);
                 }
             }
         }
-    }
-
-    private static void renderMagicCircleForClient(LivingEntity livingEntity, MagicCircleData magicCircleData, PoseStack poseStack, MultiBufferSource bufferSource, float partialTick) {
-        poseStack.pushPose();
-
-        double lerpX = Mth.lerp(partialTick, livingEntity.xo, livingEntity.getX());
-        double lerpY = Mth.lerp(partialTick, livingEntity.yo, livingEntity.getY());
-        double lerpZ = Mth.lerp(partialTick, livingEntity.zo, livingEntity.getZ());
-
-        Vec3 cameraPos = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
-        poseStack.translate(lerpX - cameraPos.x, lerpY - cameraPos.y, lerpZ - cameraPos.z);
-
-        float gameTime = (float) livingEntity.level().getGameTime() + partialTick;
-        float rotation = gameTime * 3.0f;
-        float scale = magicCircleData.getSize();
-        int color = magicCircleData.getColor();
-        RenderType renderType = magicCircleData.renderType;
-
-        poseStack.translate(0, magicCircleData.getYOffset(), 0);
-
-        if (magicCircleData.isPlacedOnGroundElseViewFaced()) {
-            poseStack.mulPose(Axis.XP.rotationDegrees(90));
-        } else {
-            // Apply Rotation to match entity view
-            float yRot = Mth.lerp(partialTick, livingEntity.yRotO, livingEntity.getYRot());
-            float xRot = Mth.lerp(partialTick, livingEntity.xRotO, livingEntity.getXRot());
-
-            poseStack.mulPose(Axis.YP.rotationDegrees(-yRot)); // Yaw
-            poseStack.mulPose(Axis.XP.rotationDegrees(xRot));  // Pitch
-
-            // Move Forward (In the direction of the view)
-            poseStack.translate(0, 0, magicCircleData.getZOffset());
-            poseStack.translate(magicCircleData.getXOffset(), 0, 0);
-        }
-
-        // Apply Circle Spin
-        poseStack.mulPose(Axis.ZP.rotationDegrees(rotation));
-
-        poseStack.scale(scale, scale, 1);
-
-        // Extract RGB
-        float r = ((color >> 16) & 0xFF) / 255.0f;
-        float g = ((color >> 8) & 0xFF) / 255.0f;
-        float b = (color & 0xFF) / 255.0f;
-
-        VertexConsumer vertexConsumer = bufferSource.getBuffer(renderType);
-        drawQuad(poseStack, vertexConsumer, r, g, b, magicCircleData.getOpacity());
-
-        poseStack.popPose();
-
-        /*if (bufferSource instanceof MultiBufferSource.BufferSource batchSource) {
-            batchSource.endBatch(renderType);
-        }*/
-    }
-
-    private static void drawQuad(PoseStack ps, VertexConsumer builder, float r, float g, float b, float alpha) {
-        Matrix4f matrix = ps.last().pose();
-        float size = 0.5f;
-        int overlay = OverlayTexture.NO_OVERLAY;
-        int light = 0xF000F0;
-
-        // Front
-        builder.vertex(matrix, -size, -size, 0).color(r, g, b, alpha).uv(0, 0).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-        builder.vertex(matrix, -size, size, 0).color(r, g, b, alpha).uv(0, 1).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-        builder.vertex(matrix, size, size, 0).color(r, g, b, alpha).uv(1, 1).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-        builder.vertex(matrix, size, -size, 0).color(r, g, b, alpha).uv(1, 0).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
     }
 
     private static void updateMagicCirclesPerTick() {

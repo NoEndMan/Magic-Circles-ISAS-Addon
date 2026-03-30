@@ -2,6 +2,7 @@ package net.flameslight.magiccircles.datagen;
 
 import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.spells.SchoolType;
+import net.flameslight.magiccircles.datagen.render.MagicCirclesRender;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
@@ -37,7 +38,8 @@ public class MagicCircleFactory {
         if(sizeIndex < 0 || sizeIndex >= TEXTURES_PER_SIZE.length)
             return null;
 
-        RenderType usedTexture = RenderType.entityTranslucent(TEXTURES_PER_SIZE[sizeIndex]);
+        ResourceLocation usedTexture = TEXTURES_PER_SIZE[sizeIndex];
+        RenderType usedRenderType = MagicCirclesRender.cachedCreateRenderType(usedTexture);
         float usedSize = SIZES_BY_INDEX[sizeIndex];
         float xOffset, zOffset, yOffset;
         boolean isPlacedOnGroundElseViewFaced;
@@ -53,10 +55,10 @@ public class MagicCircleFactory {
             isPlacedOnGroundElseViewFaced = false;
             zOffset = 1.5f;
             xOffset = -0.22f;
-            yOffset = caster.getEyeHeight() - 0.2f;
+            yOffset = -0.2f;
         }
 
-        return new MagicCircleData(spellName, color, usedTexture, isPlacedOnGroundElseViewFaced, usedSize, xOffset, zOffset, yOffset);
+        return new MagicCircleData(spellName, color, usedRenderType, isPlacedOnGroundElseViewFaced, usedSize, xOffset, zOffset, yOffset);
     }
 
     private static int getColorFromSchool(SchoolType school) {

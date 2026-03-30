@@ -4,7 +4,7 @@ import net.minecraft.client.renderer.RenderType;
 
 public class MagicCircleData {
     private static final float MAX_OPACITY = 1f;
-    private static final float MIN_OPACITY = 0f;
+    private static final float MIN_OPACITY = 0.1f;
     public final RenderType renderType;
     public final String castedSpellName;
     private int color;

@@ -3,6 +3,7 @@ package net.flameslight.magiccircles.datagen.events;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.flameslight.magiccircles.MagicCircles;
 import net.flameslight.magiccircles.datagen.MagicCircleManager;
+import net.flameslight.magiccircles.datagen.render.MagicCirclesRender;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.Entity;
@@ -30,6 +31,7 @@ public class ClientEvents {
     @SubscribeEvent
     public static void onClientLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         MagicCircleManager.handleClientLeaving();
+        MagicCirclesRender.clearCache();
     }
 
     @SubscribeEvent
