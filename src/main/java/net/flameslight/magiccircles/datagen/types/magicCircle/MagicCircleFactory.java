@@ -3,12 +3,14 @@ package net.flameslight.magiccircles.datagen.types.magicCircle;
 import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.spells.CastType;
 import io.redspace.ironsspellbooks.api.spells.SchoolType;
+import net.flameslight.magiccircles.config.ClientConfig;
 import net.flameslight.magiccircles.datagen.MagicCircleManager;
 import net.flameslight.magiccircles.datagen.render.MagicCirclesRender;
 import net.flameslight.magiccircles.datagen.types.EntitySnapshot;
 import net.flameslight.magiccircles.datagen.types.transformations.TransformManager;
 import net.flameslight.magiccircles.datagen.types.transformations.render.RenderAnimations;
 import net.flameslight.magiccircles.datagen.types.transformations.data.DataTransformAnimations;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
@@ -52,14 +54,14 @@ public class MagicCircleFactory {
         if(castType != CastType.LONG)
             sizeIndex = Math.min(2, sizeIndex);
 
-        int color = getColorFromSchool(spell.getSchoolType());
         ResourceLocation usedTexture = TEXTURES_PER_SIZE[sizeIndex];
+        TransformManager animationManager = new TransformManager();
         RenderType usedRenderType = MagicCirclesRender.cachedCreateRenderType(usedTexture);
         float usedSize = SIZES_BY_INDEX[sizeIndex];
         float xOffset, zOffset, yOffset;
-        TransformManager animationManager = new TransformManager();
-        int usedFadeInTicks, usedFadeOutTicks;
         float rotationChangePerTick;
+        int usedFadeInTicks, usedFadeOutTicks;
+        int color = getColorFromSchool(spell.getSchoolType());
 
         if (sizeIndex > 2) {
             // --- Under Player ---
@@ -79,10 +81,18 @@ public class MagicCircleFactory {
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentSizeScalingExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getRenderRotatedCircleExecutable());
         } else {
-            // infront of entity ---
-            zOffset = 1.5f;
-            xOffset = -0.22f;
-            yOffset = -0.2f;
+            if(caster instanceof LocalPlayer) {
+                // infront of player
+                zOffset = ClientConfig.Z_OFFSET_FROM_CROSS.get().floatValue();
+                xOffset = ClientConfig.X_OFFSET_FROM_CROSS.get().floatValue();
+                yOffset = ClientConfig.Y_OFFSET_FROM_CROSS.get().floatValue();
+            } else {
+                // infront of entity
+                zOffset = ClientConfig.Z_OFFSET_FROM_VIEW.get().floatValue();
+                xOffset = ClientConfig.X_OFFSET_FROM_VIEW.get().floatValue();
+                yOffset = ClientConfig.Y_OFFSET_FROM_VIEW.get().floatValue();
+            }
+
             usedFadeInTicks = HAND_CIRCLE_FADE_IN_TICKS;
             usedFadeOutTicks = HAND_CIRCLE_FADE_OUT_TICKS;
             rotationChangePerTick = 3f;

@@ -4,6 +4,8 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.flameslight.magiccircles.config.ClientConfig;
+import net.flameslight.magiccircles.datagen.types.CirclesStyle;
 import net.flameslight.magiccircles.datagen.types.EntitySnapshot;
 import net.flameslight.magiccircles.datagen.types.magicCircle.MagicCircleData;
 import net.minecraft.client.Camera;
@@ -18,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MagicCirclesRender extends RenderType {
-
+    private static CirclesStyle usedStyleInCache;
     private static final Map<ResourceLocation, RenderType> CACHE = new HashMap<>();
 
     // Required constructor (never used directly)
@@ -29,39 +31,52 @@ public class MagicCirclesRender extends RenderType {
     }
 
     public static RenderType cachedCreateRenderType(ResourceLocation texture) {
+        CirclesStyle usedStyle = ClientConfig.CIRCLES_STYLE.get();
+
+        if(!CACHE.isEmpty() && usedStyleInCache != usedStyle) {
+            CACHE.clear();
+        }
+
+        if(CACHE.isEmpty()) {
+            usedStyleInCache = usedStyle;
+        }
+
         return CACHE.computeIfAbsent(texture, tex -> {
-            CompositeState state = CompositeState.builder()
-                    // stable shader
-                    .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+            if(usedStyle == CirclesStyle.NEON) {
+                CompositeState state = CompositeState.builder()
+                        // stable shader
+                        .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
 
-                    // texture
-                    .setTextureState(new TextureStateShard(tex, false, false))
+                        // texture
+                        .setTextureState(new TextureStateShard(tex, false, false))
 
-                    // glow effect
-                    .setTransparencyState(ADDITIVE_TRANSPARENCY)
+                        // glow effect
+                        .setTransparencyState(ADDITIVE_TRANSPARENCY)
 
-                    // render both sides
-                    .setCullState(NO_CULL)
+                        // render both sides
+                        .setCullState(NO_CULL)
 
-                    // fullbright support
-                    .setLightmapState(LIGHTMAP)
+                        // fullbright support
+                        .setLightmapState(LIGHTMAP)
 
-                    .setOverlayState(OVERLAY)
+                        .setOverlayState(OVERLAY)
 
-                    // avoids depth artifacts
-                    .setWriteMaskState(COLOR_WRITE)
+                        // avoids depth artifacts
+                        .setWriteMaskState(COLOR_WRITE)
 
-                    .createCompositeState(true);
+                        .createCompositeState(true);
 
-            return RenderType.create(
-                    "magic_circle_glow",
-                    DefaultVertexFormat.NEW_ENTITY,
-                    VertexFormat.Mode.QUADS,
-                    256,
-                    false,
-                    true,
-                    state
-            );
+                return RenderType.create(
+                        "magic_circle_glow",
+                        DefaultVertexFormat.NEW_ENTITY,
+                        VertexFormat.Mode.QUADS,
+                        256,
+                        false,
+                        true,
+                        state
+                );
+            } else
+                return RenderType.entityTranslucent(tex);
         });
     }
 
