@@ -6,7 +6,10 @@ import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.spells.CastType;
 import io.redspace.ironsspellbooks.capabilities.magic.SyncedSpellData;
 import io.redspace.ironsspellbooks.player.ClientMagicData;
+import net.flameslight.magiccircles.datagen.logger.ModLogger;
 import net.flameslight.magiccircles.datagen.render.MagicCirclesRender;
+import net.flameslight.magiccircles.datagen.types.magicCircle.MagicCircleData;
+import net.flameslight.magiccircles.datagen.types.magicCircle.MagicCircleFactory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -15,17 +18,16 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.Map;
 
 public class MagicCircleManager {
-    public record CastInfo(AbstractSpell spell, int castTime) { }
+    public record CastInfo(AbstractSpell spell, int castTime, CastType castType) {
+    }
 
-    private static final Map<LivingEntity, ArrayList<MagicCircleData>> CIRCLES_BY_ENTITY = new HashMap<>();
-    private static final int FADE_TICKS = 5;
-    private static final int TICKS_DELAY_FOR_CHANGE = 2;
-    private static int ticksCounter = TICKS_DELAY_FOR_CHANGE;
+    private static final Map<LivingEntity, MagicCircleData> CIRCLES_BY_ENTITY = new HashMap<>();
+    private static final ArrayDeque<MagicCircleData> FADE_OUT_CIRCLES = new ArrayDeque<>();
 
     public static void handlePlayerLeaving(Player player) {
         CIRCLES_BY_ENTITY.remove(player);
@@ -36,10 +38,10 @@ public class MagicCircleManager {
     }
 
     public static void handleEntityLeavingLevel(LivingEntity livingEntity) {
-        ArrayList<MagicCircleData> magicCircles = CIRCLES_BY_ENTITY.get(livingEntity);
+        MagicCircleData magicCircle = CIRCLES_BY_ENTITY.get(livingEntity);
 
-        if (magicCircles != null)
-            magicCircles.forEach(magicCircle -> magicCircle.startFadeInElseOut(false, FADE_TICKS));
+        if (magicCircle != null)
+            MagicCircleManager.startMagicCircleTermination(livingEntity, magicCircle);
     }
 
     public static void handleOnClientTick() {
@@ -56,27 +58,21 @@ public class MagicCircleManager {
                 updateMagicCircleState(livingEntity);
             }
         }
-
-        if (CIRCLES_BY_ENTITY.isEmpty())
-            return;
-
-        ticksCounter--;
-
-        if (ticksCounter < 1) {
-            ticksCounter = TICKS_DELAY_FOR_CHANGE;
-
-            applyCleaningForMagicCirclesByTick();
-        }
     }
 
     public static void renderMagicCircleForClient(PoseStack poseStack, MultiBufferSource bufferSource, float partialTick) {
-        CIRCLES_BY_ENTITY.forEach((livingEntity, magicCircleDataList) -> {
-            for (MagicCircleData magicCircleData : magicCircleDataList) {
+        CIRCLES_BY_ENTITY.forEach((caster, magicCircleData) -> {
+            magicCircleData.caster.capture(caster);
 
-                // Only render if the circle is visible (not concealed)
-                if (!magicCircleData.isConcealed()) {
-                    MagicCirclesRender.renderCircleForClient(livingEntity, magicCircleData, poseStack, bufferSource, partialTick);
-                }
+            // Only render if the circle is visible (not concealed)
+            if (!magicCircleData.isConcealed()) {
+                MagicCirclesRender.renderCircleForClient(magicCircleData, poseStack, bufferSource, partialTick);
+            }
+        });
+
+        FADE_OUT_CIRCLES.forEach(magicCircleData -> {
+            if (!magicCircleData.isConcealed()) {
+                MagicCirclesRender.renderCircleForClient(magicCircleData, poseStack, bufferSource, partialTick);
             }
         });
     }
@@ -93,10 +89,10 @@ public class MagicCircleManager {
             int castDuration = spell.getCastTime(spellLevel);
             CastType castType = spell.getCastType();
 
-            if(isShortCastSpell(castDuration, castType))
+            if (isShortCastSpell(castDuration, castType))
                 return null;
 
-            return new CastInfo(spell, ClientMagicData.getCastDuration());
+            return new CastInfo(spell, ClientMagicData.getCastDuration(), castType);
         }
 
         // 2. Handle Remote Entities
@@ -128,21 +124,20 @@ public class MagicCircleManager {
         if (isShortCastSpell(castDuration, castType))
             return null;
 
-        return new CastInfo(spell, castDuration);
+        return new CastInfo(spell, castDuration, castType);
     }
 
     private static boolean isShortCastSpell(int castDuration, CastType castType) {
-        return castType == CastType.INSTANT || castDuration <= FADE_TICKS;
+        return castType == CastType.INSTANT || castDuration <= MagicCircleFactory.HAND_CIRCLE_FADE_IN_TICKS;
     }
 
     private static void updateMagicCircleState(LivingEntity entity) {
         if (entity == null) return;
 
         CastInfo castInfo = getCastingInfo(entity);
-        ArrayList<MagicCircleData> entityCircles = getEntityMagicCircles(entity);
 
         // Get the circle currently at the top of the stack (the most recent one)
-        MagicCircleData currentActiveCircle = entityCircles.isEmpty() ? null : entityCircles.get(entityCircles.size() - 1);
+        MagicCircleData currentActiveCircle = CIRCLES_BY_ENTITY.get(entity);
 
         if (castInfo != null) {
             AbstractSpell spell = castInfo.spell();
@@ -156,8 +151,8 @@ public class MagicCircleManager {
                 // New cast or properties changed.
 
                 // 1. Fade out the old active circle (if one exists and isn't already fading out)
-                if (currentActiveCircle != null && !currentActiveCircle.isFadingOut()) {
-                    currentActiveCircle.startFadeInElseOut(false, FADE_TICKS);
+                if (currentActiveCircle != null) {
+                    MagicCircleManager.startMagicCircleTermination(entity, currentActiveCircle);
                 }
 
                 // 2. Create the new circle and start fade in
@@ -167,45 +162,31 @@ public class MagicCircleManager {
                         castInfo
                 );
 
-                if (newCircle == null)
-                    return;
+                // newCircle should never be null, if so then this is a code bug
+                assert newCircle != null;
 
-                newCircle.startFadeInElseOut(true, FADE_TICKS);
-                entityCircles.add(newCircle);
+                newCircle.startInitElseTermination(true);
+                CIRCLES_BY_ENTITY.put(entity, newCircle);
             }
         } else {
-            // Casting finished/interrupted. Fade out ALL circles that are not concealed.
-            for (MagicCircleData circle : entityCircles) {
-                if (!circle.isConcealed() && !circle.isFadingOut()) {
-                    circle.startFadeInElseOut(false, FADE_TICKS);
-                }
-            }
+            if(currentActiveCircle != null)
+                MagicCircleManager.startMagicCircleTermination(entity, currentActiveCircle);
         }
     }
 
     private static void updateMagicCirclesPerTick() {
-        CIRCLES_BY_ENTITY.values().forEach(magicCircles -> magicCircles.forEach(MagicCircleData::updatePerTick));
+        CIRCLES_BY_ENTITY.values().forEach(MagicCircleData::updatePerTick);
+
+        FADE_OUT_CIRCLES.removeIf((magicCircleData -> {
+            magicCircleData.updatePerTick();
+
+            return magicCircleData.isConcealed();
+        }));
     }
 
-    private static void applyCleaningForMagicCirclesByTick() {
-        ArrayList<LivingEntity> toRemove = new ArrayList<>();
-
-        for (Map.Entry<LivingEntity, ArrayList<MagicCircleData>> entry : CIRCLES_BY_ENTITY.entrySet()) {
-            ArrayList<MagicCircleData> magicCircles = entry.getValue();
-
-            magicCircles.removeIf(MagicCircleData::isConcealed);
-
-            if (magicCircles.isEmpty()) {
-                LivingEntity uuid = entry.getKey();
-                toRemove.add(uuid);
-            }
-        }
-
-        for (LivingEntity remove : toRemove)
-            CIRCLES_BY_ENTITY.remove(remove);
-    }
-
-    private static ArrayList<MagicCircleData> getEntityMagicCircles(LivingEntity e) {
-        return CIRCLES_BY_ENTITY.computeIfAbsent(e, x -> new ArrayList<>());
+    private static void startMagicCircleTermination(LivingEntity caster, MagicCircleData magicCircleData) {
+        CIRCLES_BY_ENTITY.remove(caster);
+        magicCircleData.startInitElseTermination(false);
+        FADE_OUT_CIRCLES.add(magicCircleData);
     }
 }
