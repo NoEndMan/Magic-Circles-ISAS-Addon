@@ -6,6 +6,7 @@ import io.redspace.ironsspellbooks.api.spells.SchoolType;
 import net.flameslight.magiccircles.config.ClientConfig;
 import net.flameslight.magiccircles.datagen.MagicCircleManager;
 import net.flameslight.magiccircles.datagen.render.MagicCirclesRender;
+import net.flameslight.magiccircles.datagen.types.CirclesStyle;
 import net.flameslight.magiccircles.datagen.types.EntitySnapshot;
 import net.flameslight.magiccircles.datagen.types.transformations.TransformManager;
 import net.flameslight.magiccircles.datagen.types.transformations.render.RenderAnimations;
@@ -21,14 +22,23 @@ import net.minecraft.world.entity.LivingEntity;
 public class MagicCircleFactory {
     @SuppressWarnings("removal")
     private static final ResourceLocation[] TEXTURES_PER_SIZE = new ResourceLocation[]{
-            new ResourceLocation("magiccircles", "textures/circle_1.png"),
-            new ResourceLocation("magiccircles", "textures/circle_2.png"),
-            new ResourceLocation("magiccircles", "textures/circle_3.png"),
-            new ResourceLocation("magiccircles", "textures/circle_4.png"),
-            new ResourceLocation("magiccircles", "textures/circle_5.png")
+            new ResourceLocation("magiccircles", "textures/circles/old/circle_1.png"),
+            new ResourceLocation("magiccircles", "textures/circles/old/circle_2.png"),
+            new ResourceLocation("magiccircles", "textures/circles/old/circle_3.png"),
+            new ResourceLocation("magiccircles", "textures/circles/old/circle_4.png"),
+            new ResourceLocation("magiccircles", "textures/circles/old/circle_5.png")
     };
 
-    private static final float[] SIZES_BY_INDEX = new float[]{1.4f, 2.4f, 2.7f, 8f, 18f};
+    @SuppressWarnings("removal")
+    private static final ResourceLocation[] TEXTURES_NEON_PER_SIZE = new ResourceLocation[]{
+            new ResourceLocation("magiccircles", "textures/circles/old/circle_1.png"),
+            new ResourceLocation("magiccircles", "textures/circles/neon/circle_2_neon.png"),
+            new ResourceLocation("magiccircles", "textures/circles/neon/circle_3_neon.png"),
+            new ResourceLocation("magiccircles", "textures/circles/neon/circle_4_neon.png"),
+            new ResourceLocation("magiccircles", "textures/circles/old/circle_5.png")
+    };
+
+    private static final float[] SIZES_BY_INDEX = new float[]{1.2f, 2.2f, 2.7f, 7f, 18f};
 
     public static final int HAND_CIRCLE_FADE_IN_TICKS = 4;
     public static final int UNDER_PLAYER_FADE_IN_TICKS = 36;
@@ -54,9 +64,13 @@ public class MagicCircleFactory {
         if(castType != CastType.LONG)
             sizeIndex = Math.min(2, sizeIndex);
 
-        ResourceLocation usedTexture = TEXTURES_PER_SIZE[sizeIndex];
+        CirclesStyle usedStyle = ClientConfig.CIRCLES_STYLE.get();
+
+        ResourceLocation usedTexture = usedStyle == CirclesStyle.NEON
+                ? TEXTURES_NEON_PER_SIZE[sizeIndex]
+                : TEXTURES_PER_SIZE[sizeIndex];
+        RenderType usedRenderType = MagicCirclesRender.cachedCreateRenderType(usedTexture, usedStyle);
         TransformManager animationManager = new TransformManager();
-        RenderType usedRenderType = MagicCirclesRender.cachedCreateRenderType(usedTexture);
         float usedSize = SIZES_BY_INDEX[sizeIndex];
         float xOffset, zOffset, yOffset;
         float rotationChangePerTick;
@@ -67,7 +81,7 @@ public class MagicCircleFactory {
             // --- Under Player ---
             xOffset = 0;
             zOffset = 0;
-            yOffset = 0.05f;
+            yOffset = 0.06f;
             usedFadeInTicks = UNDER_PLAYER_FADE_IN_TICKS;
             usedFadeOutTicks = UNDER_PLAYER_FADE_OUT_TICKS;
             rotationChangePerTick = 5f;
@@ -75,11 +89,11 @@ public class MagicCircleFactory {
             animationManager.addInitTransformation(DataTransformAnimations.getGradualScalingExecutable(usedSize + 12f));
             animationManager.addInitTransformation(DataTransformAnimations.getGradualRotationPerTick(2f, 6));
 
-            animationManager.addPermanentDataTransformation(DataTransformAnimations.getRotatedCircleExecutable());
+            animationManager.addPermanentDataTransformation(DataTransformAnimations.getConstantRotatedCircleExecutable());
 
             animationManager.addPermanentRenderTransformation(RenderAnimations.getGroundFacingExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentSizeScalingExecutable());
-            animationManager.addPermanentRenderTransformation(RenderAnimations.getRenderRotatedCircleExecutable());
+            animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentRotationExecutable());
         } else {
             if(caster instanceof LocalPlayer) {
                 // infront of player
@@ -97,11 +111,11 @@ public class MagicCircleFactory {
             usedFadeOutTicks = HAND_CIRCLE_FADE_OUT_TICKS;
             rotationChangePerTick = 3f;
 
-            animationManager.addPermanentDataTransformation(DataTransformAnimations.getRotatedCircleExecutable());
+            animationManager.addPermanentDataTransformation(DataTransformAnimations.getConstantRotatedCircleExecutable());
 
             animationManager.addPermanentRenderTransformation(RenderAnimations.getBillboardPositioningExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentSizeScalingExecutable());
-            animationManager.addPermanentRenderTransformation(RenderAnimations.getRenderRotatedCircleExecutable());
+            animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentRotationExecutable());
         }
 
         EntitySnapshot entitySnapshot = new EntitySnapshot(caster);

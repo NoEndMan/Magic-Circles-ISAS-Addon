@@ -66,13 +66,17 @@ public class MagicCircleManager {
 
             // Only render if the circle is visible (not concealed)
             if (!magicCircleData.isConcealed()) {
-                MagicCirclesRender.renderCircleForClient(magicCircleData, poseStack, bufferSource, partialTick);
+                int ticks = magicCircleData.getTicks();
+
+                MagicCirclesRender.renderCircleForClient(magicCircleData, poseStack, bufferSource, ticks, partialTick);
             }
         });
 
         FADE_OUT_CIRCLES.forEach(magicCircleData -> {
             if (!magicCircleData.isConcealed()) {
-                MagicCirclesRender.renderCircleForClient(magicCircleData, poseStack, bufferSource, partialTick);
+                int ticks = magicCircleData.getTicks();
+
+                MagicCirclesRender.renderCircleForClient(magicCircleData, poseStack, bufferSource, ticks, partialTick);
             }
         });
     }

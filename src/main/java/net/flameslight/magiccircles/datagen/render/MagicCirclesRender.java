@@ -4,7 +4,6 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import net.flameslight.magiccircles.config.ClientConfig;
 import net.flameslight.magiccircles.datagen.types.CirclesStyle;
 import net.flameslight.magiccircles.datagen.types.EntitySnapshot;
 import net.flameslight.magiccircles.datagen.types.magicCircle.MagicCircleData;
@@ -30,9 +29,7 @@ public class MagicCirclesRender extends RenderType {
         super(name, format, mode, bufferSize, affectsCrumbling, sortOnUpload, setupState, clearState);
     }
 
-    public static RenderType cachedCreateRenderType(ResourceLocation texture) {
-        CirclesStyle usedStyle = ClientConfig.CIRCLES_STYLE.get();
-
+    public static RenderType cachedCreateRenderType(ResourceLocation texture, CirclesStyle usedStyle) {
         if(!CACHE.isEmpty() && usedStyleInCache != usedStyle) {
             CACHE.clear();
         }
@@ -80,14 +77,18 @@ public class MagicCirclesRender extends RenderType {
         });
     }
 
-    public static void renderCircleForClient(MagicCircleData magicCircleData, PoseStack poseStack, MultiBufferSource bufferSource, float partialTick) {
+    public static void renderCircleForClient(MagicCircleData magicCircleData,
+                                             PoseStack poseStack,
+                                             MultiBufferSource bufferSource,
+                                             int passedGameTicksForCircle,
+                                             float newPartialTick) {
         poseStack.pushPose();
         EntitySnapshot caster = magicCircleData.caster;
 
         // Interpolated entity position
-        double lerpX = Mth.lerp(partialTick, caster.xo, caster.x);
-        double lerpY = Mth.lerp(partialTick, caster.yo, caster.y);
-        double lerpZ = Mth.lerp(partialTick, caster.zo, caster.z);
+        double lerpX = Mth.lerp(newPartialTick, caster.xo, caster.x);
+        double lerpY = Mth.lerp(newPartialTick, caster.yo, caster.y);
+        double lerpZ = Mth.lerp(newPartialTick, caster.zo, caster.z);
 
         // Camera-relative position
         Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
@@ -95,11 +96,16 @@ public class MagicCirclesRender extends RenderType {
         poseStack.translate(lerpX - cameraPos.x, lerpY - cameraPos.y, lerpZ - cameraPos.z);
         RenderType renderType = magicCircleData.renderType;
 
-        magicCircleData.executePermanentRenderTransforms(poseStack, caster, partialTick);
+        magicCircleData.executeInitTransforms(caster, newPartialTick);
+        magicCircleData.executeFinalTransforms(caster, newPartialTick);
+        magicCircleData.executePermanentRenderTransforms(poseStack, caster, newPartialTick);
+        magicCircleData.executePermanentDataTransforms(caster, newPartialTick);
 
         VertexConsumer vertexConsumer = bufferSource.getBuffer(renderType);
         float[] color = magicCircleData.getColor();
         RendererUtils.drawQuad(poseStack, vertexConsumer, color[0], color[1], color[2], color[3]);
+
+        magicCircleData.setLastFullTicks(passedGameTicksForCircle + newPartialTick);
 
         poseStack.popPose();
     }

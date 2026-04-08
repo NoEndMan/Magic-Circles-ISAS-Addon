@@ -8,7 +8,7 @@ import net.minecraft.util.Mth;
  * Animations that applied on every animation tick
  */
 public class RenderAnimations {
-    public static RenderTransformExecutable getRenderRotatedCircleExecutable() {
+    public static RenderTransformExecutable getCurrentRotationExecutable() {
         return (poseStack, entitySnapshot, magicCircleData, partialTick) ->
             poseStack.mulPose(Axis.ZP.rotationDegrees(magicCircleData.getRotation()));
     }

@@ -23,6 +23,7 @@ public class MagicCircleData {
     private int ticks;
     private int initTicks;
     private int finalTicks;
+    private float lastFullTicks;
     private float rotation;
     private float rotationChange;
     private float baseR;
@@ -58,6 +59,7 @@ public class MagicCircleData {
         this.currentSize = staticSize;
         this.finalTicks = 0;
         this.rotation = 0;
+        this.lastFullTicks = 0;
 
         float[] color = Utils.extractRGBFromHexColor(hexColor);
 
@@ -91,8 +93,6 @@ public class MagicCircleData {
                 this.opacity = Math.min(MAX_OPACITY, this.opacity + opacityChangePerTick);
             else
                 this.isFadingIn = false;
-
-            this.executeInitTransforms(caster);
         } else if (isFadingOut) {
             if(this.finalTicks < this.finalTotalTicks)
                 this.finalTicks++;
@@ -104,11 +104,7 @@ public class MagicCircleData {
 
                 this.isConcealed = true;
             }
-
-            this.executeFinalTransforms(caster);
         }
-
-        this.executePermanentDataTransforms(caster);
     }
 
     public void startInitElseTermination(boolean fadeInElseOut) {
@@ -127,16 +123,18 @@ public class MagicCircleData {
         this.transformManager.executeRenderTransformations(poseStack, entitySnapshot, this, partialTick);
     }
 
-    public void executePermanentDataTransforms(EntitySnapshot entitySnapshot) {
-        this.transformManager.executePermanentDataTransformations(entitySnapshot, this, this.ticks);
+    public void executePermanentDataTransforms(EntitySnapshot entitySnapshot, float newPartialTicks) {
+        this.transformManager.executePermanentDataTransformations(entitySnapshot, this, this.ticks + newPartialTicks);
     }
 
-    public void executeInitTransforms(EntitySnapshot entitySnapshot) {
-        this.transformManager.executeInitTransformations(entitySnapshot, this, this.initTicks, this.initTotalTicks);
+    public void executeInitTransforms(EntitySnapshot entitySnapshot, float newPartialTicks) {
+        if(this.isFadingIn)
+            this.transformManager.executeInitTransformations(entitySnapshot, this, this.initTicks + newPartialTicks, this.initTotalTicks);
     }
 
-    public void executeFinalTransforms(EntitySnapshot entitySnapshot) {
-        this.transformManager.executeFinalTransformations(entitySnapshot, this, this.finalTicks, this.finalTotalTicks);
+    public void executeFinalTransforms(EntitySnapshot entitySnapshot, float newPartialTicks) {
+        if(this.isFadingOut)
+            this.transformManager.executeFinalTransformations(entitySnapshot, this, this.finalTicks + newPartialTicks, this.finalTotalTicks);
     }
 
     public boolean isConcealed() {
@@ -190,5 +188,17 @@ public class MagicCircleData {
 
     public void setRotationChange(float change) {
         this.rotationChange = change;
+    }
+
+    public void setLastFullTicks(float lastFullTicks) {
+        this.lastFullTicks = lastFullTicks;
+    }
+
+    public float getLastFullTicks() {
+        return this.lastFullTicks;
+    }
+
+    public int getTicks() {
+        return this.ticks;
     }
 }

@@ -11,8 +11,8 @@ import java.util.ArrayList;
 
 /**
  * transformations calling order:
- *  1. per render - RenderTransformExecutable
- *  2. per tick - every other
+ * 1. per render - RenderTransformExecutable
+ * 2. per tick - every other
  */
 public class TransformManager {
     // applied at circle init until a certain tick
@@ -29,33 +29,33 @@ public class TransformManager {
 
     public void executeInitTransformations(EntitySnapshot entitySnapshot,
                                            MagicCircleData data,
-                                           int currentTicks,
+                                           float currentFullTicks,
                                            int totalTicks) {
         this.initTransformations.forEach(animation -> animation.execute(
                 entitySnapshot,
                 data,
-                currentTicks,
+                currentFullTicks,
                 totalTicks));
     }
 
     public void executeFinalTransformations(EntitySnapshot entitySnapshot,
                                             MagicCircleData data,
-                                            int currentTicks,
+                                            float currentFullTicks,
                                             int totalTicks) {
         this.finalTransformations.forEach(animation -> animation.execute(
                 entitySnapshot,
                 data,
-                currentTicks,
+                currentFullTicks,
                 totalTicks));
     }
 
     public void executePermanentDataTransformations(EntitySnapshot entitySnapshot,
-                                             MagicCircleData data,
-                                             int currentTicks) {
+                                                    MagicCircleData data,
+                                                    float currentFullTicks) {
         this.dataTransformations.forEach(animation -> animation.execute(
                 entitySnapshot,
                 data,
-                currentTicks));
+                currentFullTicks));
     }
 
     public void executeRenderTransformations(PoseStack poseStack,

@@ -7,5 +7,5 @@ import net.flameslight.magiccircles.datagen.types.magicCircle.MagicCircleData;
 public interface DataTransformExecutable {
     void execute(EntitySnapshot entitySnapshot,
                  MagicCircleData data,
-                 int currentTicks);
+                 float newFullTicks);
 }

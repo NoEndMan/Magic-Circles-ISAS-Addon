@@ -22,11 +22,11 @@ public class ClientConfig {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
         builder.comment(
-                "OLD - old circles visual\nNEON - new circles visual, glowing and transparent" );
+                "OLD - old circle visuals\nNEON - new circle visuals, glowing and transparent" );
         CIRCLES_STYLE = builder
                 .defineEnum("circlesStyle", CirclesStyle.NEON);
 
-        builder.comment("\nParameters for hand positioned circles for client casting:" );
+        builder.comment("\nParameters for hand positioned circles for client casting:");
         builder.comment("Positive is left direction from client cross" );
         X_OFFSET_FROM_CROSS = builder
                 .defineInRange("xOffsetFromCross", -0.22, -Float.MAX_VALUE, Float.MAX_VALUE);
@@ -50,7 +50,7 @@ public class ClientConfig {
 
         builder.comment("Positive is forwards direction when looking from entity view direction" );
         Z_OFFSET_FROM_VIEW = builder
-                .defineInRange("zOffsetFromView", 1.5, -Float.MAX_VALUE, Float.MAX_VALUE);
+                .defineInRange("zOffsetFromView", 1.3, -Float.MAX_VALUE, Float.MAX_VALUE);
 
         SPEC = builder.build();
     }
