@@ -18,6 +18,10 @@ public class ClientConfig {
     public static final ForgeConfigSpec.DoubleValue Y_OFFSET_FROM_VIEW;
     public static final ForgeConfigSpec.DoubleValue Z_OFFSET_FROM_VIEW;
 
+    // Under entity wheels
+    public static final ForgeConfigSpec.DoubleValue Y_OFFSET_FROM_PLAYER_BOTTOM;
+    public static final ForgeConfigSpec.DoubleValue Y_OFFSET_FROM_ENTITY_BOTTOM;
+
     static {
         ForgeConfigSpec.Builder builder = new ForgeConfigSpec.Builder();
 
@@ -39,7 +43,7 @@ public class ClientConfig {
         Z_OFFSET_FROM_CROSS = builder
                 .defineInRange("zOffsetFromCross", 1.5, -Float.MAX_VALUE, Float.MAX_VALUE);
 
-        builder.comment("\nParameters for hand positioned circles for other entities, viewed in client side" );
+        builder.comment("\nParameters for hand positioned circles for other entities casting" );
         builder.comment("Positive is left direction when looking from entity view direction" );
         X_OFFSET_FROM_VIEW = builder
                 .defineInRange("xOffsetFromView", -0.22, -Float.MAX_VALUE, Float.MAX_VALUE);
@@ -51,6 +55,16 @@ public class ClientConfig {
         builder.comment("Positive is forwards direction when looking from entity view direction" );
         Z_OFFSET_FROM_VIEW = builder
                 .defineInRange("zOffsetFromView", 1.3, -Float.MAX_VALUE, Float.MAX_VALUE);
+
+        builder.comment("\nParameters for under entity circles for client casting:");
+        builder.comment("Positive is upwards");
+        Y_OFFSET_FROM_PLAYER_BOTTOM = builder
+                .defineInRange("yOffsetFromPlayerBottom", 0.01, -Float.MAX_VALUE, Float.MAX_VALUE);
+
+        builder.comment("\nParameters for under entity circles for other entities casting:");
+        builder.comment("Positive is upwards");
+        Y_OFFSET_FROM_ENTITY_BOTTOM = builder
+                .defineInRange("yOffsetFromEntityBottom", 0.01, -Float.MAX_VALUE, Float.MAX_VALUE);
 
         SPEC = builder.build();
     }

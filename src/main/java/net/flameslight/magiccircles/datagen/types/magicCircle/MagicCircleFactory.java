@@ -38,10 +38,10 @@ public class MagicCircleFactory {
             new ResourceLocation("magiccircles", "textures/circles/old/circle_5.png")
     };
 
-    private static final float[] SIZES_BY_INDEX = new float[]{1.2f, 2.2f, 2.7f, 7f, 18f};
+    private static final float[] SIZES_BY_INDEX = new float[]{1.2f, 2.2f, 2.7f, 4f, 18f};
 
     public static final int HAND_CIRCLE_FADE_IN_TICKS = 4;
-    public static final int UNDER_PLAYER_FADE_IN_TICKS = 36;
+    public static final int UNDER_PLAYER_FADE_IN_TICKS = 24;
 
     public static final int HAND_CIRCLE_FADE_OUT_TICKS = 4;
     public static final int UNDER_PLAYER_FADE_OUT_TICKS = 6;
@@ -79,9 +79,15 @@ public class MagicCircleFactory {
 
         if (sizeIndex > 2) {
             // --- Under Player ---
+            if(caster instanceof LocalPlayer) {
+                yOffset = ClientConfig.Y_OFFSET_FROM_PLAYER_BOTTOM.get().floatValue();
+            } else {
+                // infront of entity
+                yOffset = ClientConfig.Y_OFFSET_FROM_ENTITY_BOTTOM.get().floatValue();
+            }
+
             xOffset = 0;
             zOffset = 0;
-            yOffset = 0.06f;
             usedFadeInTicks = UNDER_PLAYER_FADE_IN_TICKS;
             usedFadeOutTicks = UNDER_PLAYER_FADE_OUT_TICKS;
             rotationChangePerTick = 5f;
@@ -91,6 +97,7 @@ public class MagicCircleFactory {
 
             animationManager.addPermanentDataTransformation(DataTransformAnimations.getConstantRotatedCircleExecutable());
 
+            animationManager.addPermanentRenderTransformation(RenderAnimations.getCasterRelativePositioned());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getGroundFacingExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentSizeScalingExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentRotationExecutable());

@@ -6,11 +6,13 @@ package net.flameslight.magiccircles.datagen.types.transformations.data;
 public class DataTransformAnimations {
     public static TempDataTransformExecutable getGradualScalingExecutable(float targetScaling) {
         return (entitySnapshot, magicCircleData, newFullTicks, totalTicks) -> {
-            float progressPercentage = Math.min(newFullTicks / totalTicks, 1);
+            float tickDifference = newFullTicks - magicCircleData.getLastFullTicks();
+            int fullPassedTicks = (int) newFullTicks;
             float currentSize = magicCircleData.getCurrentSize();
-            float scalingDifference = targetScaling - currentSize;
-            float scaleChange = progressPercentage * scalingDifference;
-            float newScale = scaleChange + currentSize;
+            float leftScaling = targetScaling - currentSize;
+            float neededScalingPerTick = totalTicks == fullPassedTicks ? 0 : leftScaling / (totalTicks - fullPassedTicks);
+            float change = neededScalingPerTick * tickDifference;
+            float newScale = change + currentSize;
 
             magicCircleData.setCurrentSize(newScale);
         };
@@ -19,13 +21,17 @@ public class DataTransformAnimations {
     public static TempDataTransformExecutable getGradualRotationPerTick(float targetRotationChangePerTick,
                                                                         int startingTick) {
         return (entitySnapshot, magicCircleData, newFullTicks, totalTicks) -> {
-            float progressPercentage = Math.max(0, newFullTicks - startingTick) / (totalTicks - startingTick);
-            float currentRotationChange = magicCircleData.getRotationChange();
-            float changeDifference = targetRotationChangePerTick - currentRotationChange;
-            float change = progressPercentage * changeDifference;
-            float newRotationChange = change + currentRotationChange;
+            if(newFullTicks > startingTick) {
+                float tickDifference = newFullTicks - magicCircleData.getLastFullTicks();
+                int fullPassedTicks = (int) newFullTicks;
+                float currentRotationChange = magicCircleData.getRotationChange();
+                float leftRotation = targetRotationChangePerTick - currentRotationChange;
+                float neededRotationPerTick = totalTicks == fullPassedTicks ? 0 : leftRotation / (totalTicks - fullPassedTicks);
+                float change = neededRotationPerTick * tickDifference;
+                float newRotationChange = change + currentRotationChange;
 
-            magicCircleData.setRotationChange(newRotationChange);
+                magicCircleData.setRotationChange(newRotationChange);
+            }
         };
     }
 

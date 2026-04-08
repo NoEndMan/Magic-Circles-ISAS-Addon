@@ -44,4 +44,10 @@ public class RenderAnimations {
             poseStack.scale(appliedSize, appliedSize, 1);
         };
     }
+
+    public static RenderTransformExecutable getCasterRelativePositioned() {
+        return (poseStack, entitySnapshot, magicCircleData, partialTick) -> {
+            poseStack.translate(magicCircleData.getXOffset(), magicCircleData.getYOffset(), magicCircleData.getZOffset());
+        };
+    }
 }
