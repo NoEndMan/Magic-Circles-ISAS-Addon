@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.flameslight.magiccircles.MagicCircles;
 import net.flameslight.magiccircles.datagen.MagicCircleManager;
 import net.flameslight.magiccircles.datagen.render.MagicCirclesRender;
+import net.flameslight.magiccircles.oculus.OculusCompact;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.Entity;
@@ -36,7 +37,11 @@ public class ClientEvents {
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
+        // Only render during the translucent stage — matches the render type
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
+
+        // Skip Oculus shadow/reflection passes — this is what causes the ghost duplicate
+        if (OculusCompact.isRenderingShadowPass()) return;
 
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;

@@ -163,6 +163,8 @@ dependencies {
     // Mandatory Dependencies for ISS
     // Iron's Spells 'n Spellbooks (Project ID: 855414)
     implementation fg.deobf("curse.maven:irons-spells-n-spellbooks-855414:7402504")
+
+    compileOnly fg.deobf("curse.maven:oculus-581495:6020952")
     // For more info:
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html

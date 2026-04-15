@@ -41,8 +41,8 @@ public class MagicCirclesRender extends RenderType {
         return CACHE.computeIfAbsent(texture, tex -> {
             if(usedStyle == CirclesStyle.NEON) {
                 CompositeState state = CompositeState.builder()
-                        // stable shader
-                        .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                        // glowing transparent shader
+                        .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE_SHADER)
 
                         // texture
                         .setTextureState(new TextureStateShard(tex, false, false))
@@ -68,8 +68,8 @@ public class MagicCirclesRender extends RenderType {
                         DefaultVertexFormat.NEW_ENTITY,
                         VertexFormat.Mode.QUADS,
                         256,
-                        false,
-                        true,
+                        false, // affectsCrumbling
+                        true, // sortOnUpload
                         state
                 );
             } else
