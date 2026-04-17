@@ -2,19 +2,25 @@ package net.flameslight.magiccircles.datagen.types.magicCircle;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.flameslight.magiccircles.datagen.Utils;
+import net.flameslight.magiccircles.datagen.types.CirclesStyle;
 import net.flameslight.magiccircles.datagen.types.EntitySnapshot;
 import net.flameslight.magiccircles.datagen.types.transformations.TransformManager;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 
 public class MagicCircleData {
     public static final float MAX_OPACITY = 1f;
     public static final float MIN_OPACITY = 0.001f;
 
-    private final TransformManager transformManager;
     public final RenderType renderType;
+    public final int overlay;
+    public final int light;
     public final String castedSpellName;
     public final EntitySnapshot caster;
     public final float staticSize;
+
+    private final TransformManager transformManager;
 
     /** must be greater than 0*/
     private final int initTotalTicks;
@@ -50,7 +56,9 @@ public class MagicCircleData {
                            float zOffset,
                            float yOffset,
                            int initTotalTicks,
-                           int finalTotalTicks) {
+                           int finalTotalTicks,
+                           int light,
+                           int overlay) {
         this.opacity = MIN_OPACITY;
         this.isFadingIn = false;
         this.isFadingOut = false;
@@ -71,6 +79,8 @@ public class MagicCircleData {
         this.caster = caster;
         this.castedSpellName = castedSpellName;
         this.renderType = renderType;
+        this.light = light;
+        this.overlay = overlay;
         this.staticSize = staticSize;
         this.rotationChange = rotationChange;
         this.xOffset = xOffset;

@@ -10,11 +10,11 @@ public class OculusCompact {
         boolean loaded = false;
         try {
             Class.forName("net.irisshaders.iris.api.v0.IrisApi");
-            ModLogger.info("found oculus/iris shaders mod loaded");
+//            ModLogger.info("found oculus/iris shaders mod loaded");
             loaded = true;
         } catch (ClassNotFoundException e) {
-            // Oculus not installed, fine
-            ModLogger.info("no oculus/iris shaders mod detected");
+            // Oculus not installed
+//            ModLogger.info("no oculus/iris shaders mod detected");
         }
         OCULUS_LOADED = loaded;
     }

@@ -10,6 +10,7 @@ import net.flameslight.magiccircles.datagen.types.magicCircle.MagicCircleData;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -42,24 +43,24 @@ public class MagicCirclesRender extends RenderType {
             if(usedStyle == CirclesStyle.NEON) {
                 CompositeState state = CompositeState.builder()
                         // glowing transparent shader
-                        .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_EMISSIVE_SHADER)
+                        .setShaderState(RenderStateShard.RENDERTYPE_EYES_SHADER)
 
                         // texture
                         .setTextureState(new TextureStateShard(tex, false, false))
 
                         // glow effect
-                        .setTransparencyState(ADDITIVE_TRANSPARENCY)
+                        .setTransparencyState(RenderStateShard.ADDITIVE_TRANSPARENCY)
 
                         // render both sides
-                        .setCullState(NO_CULL)
+                        .setCullState(RenderStateShard.NO_CULL)
 
-                        // fullbright support
-                        .setLightmapState(LIGHTMAP)
+                        // no fullbright support
+                        .setLightmapState(RenderStateShard.NO_LIGHTMAP)
 
-                        .setOverlayState(OVERLAY)
+                        .setOverlayState(RenderStateShard.NO_OVERLAY)
 
                         // avoids depth artifacts
-                        .setWriteMaskState(COLOR_WRITE)
+                        .setWriteMaskState(RenderStateShard.COLOR_WRITE)
 
                         .createCompositeState(true);
 
@@ -103,7 +104,7 @@ public class MagicCirclesRender extends RenderType {
 
         VertexConsumer vertexConsumer = bufferSource.getBuffer(renderType);
         float[] color = magicCircleData.getColor();
-        RendererUtils.drawQuad(poseStack, vertexConsumer, color[0], color[1], color[2], color[3]);
+        RendererUtils.drawQuad(poseStack, vertexConsumer, color[0], color[1], color[2], color[3], magicCircleData.light, magicCircleData.overlay);
 
         magicCircleData.setLastFullTicks(passedGameTicksForCircle + newPartialTick);
 

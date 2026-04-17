@@ -12,7 +12,9 @@ import net.flameslight.magiccircles.datagen.types.transformations.TransformManag
 import net.flameslight.magiccircles.datagen.types.transformations.render.RenderAnimations;
 import net.flameslight.magiccircles.datagen.types.transformations.data.DataTransformAnimations;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
@@ -64,11 +66,20 @@ public class MagicCircleFactory {
         if(castType != CastType.LONG)
             sizeIndex = Math.min(2, sizeIndex);
 
+        ResourceLocation usedTexture;
+        int light, overlay;
         CirclesStyle usedStyle = ClientConfig.CIRCLES_STYLE.get();
 
-        ResourceLocation usedTexture = usedStyle == CirclesStyle.NEON
-                ? TEXTURES_NEON_PER_SIZE[sizeIndex]
-                : TEXTURES_PER_SIZE[sizeIndex];
+        if(usedStyle == CirclesStyle.NEON) {
+            usedTexture = TEXTURES_NEON_PER_SIZE[sizeIndex];
+            light = LightTexture.FULL_BRIGHT;
+            overlay = OverlayTexture.NO_OVERLAY;
+        } else {
+            usedTexture = TEXTURES_PER_SIZE[sizeIndex];
+            light = LightTexture.FULL_BRIGHT;
+            overlay = OverlayTexture.NO_OVERLAY;
+        }
+
         RenderType usedRenderType = MagicCirclesRender.cachedCreateRenderType(usedTexture, usedStyle);
         TransformManager animationManager = new TransformManager();
         float usedSize = SIZES_BY_INDEX[sizeIndex];
@@ -138,7 +149,9 @@ public class MagicCircleFactory {
                 zOffset,
                 yOffset,
                 usedFadeInTicks,
-                usedFadeOutTicks);
+                usedFadeOutTicks,
+                light,
+                overlay);
     }
 
     private static int getColorFromSchool(SchoolType school) {

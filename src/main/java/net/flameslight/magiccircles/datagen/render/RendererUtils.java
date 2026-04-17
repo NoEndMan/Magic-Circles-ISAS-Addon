@@ -6,20 +6,31 @@ import com.mojang.math.Axis;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 public class RendererUtils {
-    public static void drawQuad(PoseStack ps, VertexConsumer builder, float r, float g, float b, float alpha) {
+    public static void drawQuad(PoseStack ps,
+                                VertexConsumer builder,
+                                float r,
+                                float g,
+                                float b,
+                                float alpha,
+                                int light,
+                                int overlay) {
         Matrix4f matrix = ps.last().pose();
+        Matrix3f normal = ps.last().normal(); // Get the normal matrix to properly orient lighting
         float size = 0.5f;
-        int overlay = OverlayTexture.NO_OVERLAY;
-        int light = LightTexture.FULL_BRIGHT;
 
         // Front
-        builder.vertex(matrix, -size, -size, 0).color(r, g, b, alpha).uv(0, 0).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
+/*        builder.vertex(matrix, -size, -size, 0).color(r, g, b, alpha).uv(0, 0).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
         builder.vertex(matrix, -size, size, 0).color(r, g, b, alpha).uv(0, 1).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
         builder.vertex(matrix, size, size, 0).color(r, g, b, alpha).uv(1, 1).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-        builder.vertex(matrix, size, -size, 0).color(r, g, b, alpha).uv(1, 0).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
+        builder.vertex(matrix, size, -size, 0).color(r, g, b, alpha).uv(1, 0).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();*/
+        builder.vertex(matrix, -size, -size, 0).color(r, g, b, alpha).uv(0, 0).overlayCoords(overlay).uv2(light).normal(normal, 0, 0, 1).endVertex();
+        builder.vertex(matrix, -size, size, 0).color(r, g, b, alpha).uv(0, 1).overlayCoords(overlay).uv2(light).normal(normal, 0, 0, 1).endVertex();
+        builder.vertex(matrix, size, size, 0).color(r, g, b, alpha).uv(1, 1).overlayCoords(overlay).uv2(light).normal(normal, 0, 0, 1).endVertex();
+        builder.vertex(matrix, size, -size, 0).color(r, g, b, alpha).uv(1, 0).overlayCoords(overlay).uv2(light).normal(normal, 0, 0, 1).endVertex();
     }
 
     /**
