@@ -5,9 +5,9 @@ import io.redspace.ironsspellbooks.api.spells.CastType;
 import io.redspace.ironsspellbooks.api.spells.SchoolType;
 import net.flameslight.magiccircles.config.ClientConfig;
 import net.flameslight.magiccircles.datagen.MagicCircleManager;
+import net.flameslight.magiccircles.datagen.Utils;
 import net.flameslight.magiccircles.datagen.render.MagicCirclesRender;
 import net.flameslight.magiccircles.datagen.types.CirclesStyle;
-import net.flameslight.magiccircles.datagen.types.EntitySnapshot;
 import net.flameslight.magiccircles.datagen.types.transformations.TransformManager;
 import net.flameslight.magiccircles.datagen.types.transformations.render.RenderAnimations;
 import net.flameslight.magiccircles.datagen.types.transformations.data.DataTransformAnimations;
@@ -87,6 +87,10 @@ public class MagicCircleFactory {
         float rotationChangePerTick;
         int usedFadeInTicks, usedFadeOutTicks;
         int color = getColorFromSchool(spell.getSchoolType());
+        float[] colorRGB = Utils.extractRGBFromHexColor(color);
+        float[] brighterColor = Utils.brighten(colorRGB[0], colorRGB[1], colorRGB[2], 0.2f);
+
+        animationManager.addPermanentRenderTransformation(RenderAnimations.getCasterBottomPositionRelativeWorldSpaceExecutable());
 
         if (sizeIndex > 2) {
             // --- Under Player ---
@@ -103,15 +107,18 @@ public class MagicCircleFactory {
             usedFadeOutTicks = UNDER_PLAYER_FADE_OUT_TICKS;
             rotationChangePerTick = 5f;
 
-            animationManager.addInitTransformation(DataTransformAnimations.getGradualScalingExecutable(usedSize + 12f));
-            animationManager.addInitTransformation(DataTransformAnimations.getGradualRotationPerTick(2f, 6));
+            animationManager.addInitTransformation(DataTransformAnimations.getGradualOpacityChangeExecutable(1f, 6));
+            animationManager.addInitTransformation(DataTransformAnimations.getGradualScalingExecutable(usedSize + 12f, UNDER_PLAYER_FADE_IN_TICKS));
+            animationManager.addInitTransformation(DataTransformAnimations.getGradualRotationPerTick(2f, 6, UNDER_PLAYER_FADE_IN_TICKS));
 
             animationManager.addPermanentDataTransformation(DataTransformAnimations.getConstantRotatedCircleExecutable());
 
-            animationManager.addPermanentRenderTransformation(RenderAnimations.getCasterRelativePositioned());
+            animationManager.addPermanentRenderTransformation(RenderAnimations.getSyncedPositionedExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getGroundFacingExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentSizeScalingExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentRotationExecutable());
+
+            animationManager.addFinalTransformation(DataTransformAnimations.getGradualOpacityChangeExecutable(0.35f, UNDER_PLAYER_FADE_OUT_TICKS));
         } else {
             if(caster instanceof LocalPlayer) {
                 // infront of player
@@ -129,19 +136,21 @@ public class MagicCircleFactory {
             usedFadeOutTicks = HAND_CIRCLE_FADE_OUT_TICKS;
             rotationChangePerTick = 3f;
 
+            animationManager.addInitTransformation(DataTransformAnimations.getGradualOpacityChangeExecutable(1f, HAND_CIRCLE_FADE_IN_TICKS));
+
             animationManager.addPermanentDataTransformation(DataTransformAnimations.getConstantRotatedCircleExecutable());
 
-            animationManager.addPermanentRenderTransformation(RenderAnimations.getBillboardPositioningExecutable());
+            animationManager.addPermanentRenderTransformation(RenderAnimations.getCasterBillboardBehaviorExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentSizeScalingExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentRotationExecutable());
+
+            animationManager.addFinalTransformation(DataTransformAnimations.getGradualOpacityChangeExecutable(0.35f, HAND_CIRCLE_FADE_OUT_TICKS));
         }
 
-        EntitySnapshot entitySnapshot = new EntitySnapshot(caster);
-
         return new MagicCircleData(animationManager,
-                entitySnapshot,
+                caster,
                 spellName,
-                color,
+                brighterColor,
                 usedRenderType,
                 usedSize,
                 rotationChangePerTick,

@@ -16,11 +16,11 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraftforge.client.event.RenderLevelStageEvent;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.lwjgl.opengl.GL11;
 
-import java.util.ArrayDeque;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class MagicCircleManager {
     public record CastInfo(AbstractSpell spell, int castTime, CastType castType) {
@@ -60,7 +60,7 @@ public class MagicCircleManager {
         }
     }
 
-    public static void renderMagicCircleForClient(PoseStack poseStack, MultiBufferSource bufferSource, float partialTick) {
+    public static void renderCirclesForClient(PoseStack poseStack, MultiBufferSource.BufferSource bufferSource, float partialTick) {
         CIRCLES_BY_ENTITY.forEach((caster, magicCircleData) -> {
             magicCircleData.caster.capture(caster);
 
@@ -79,6 +79,17 @@ public class MagicCircleManager {
                 MagicCirclesRender.renderCircleForClient(magicCircleData, poseStack, bufferSource, ticks, partialTick);
             }
         });
+    }
+
+    public static void preRenderCircles(Minecraft mc, RenderLevelStageEvent event) {
+        if (CIRCLES_BY_ENTITY.isEmpty() && FADE_OUT_CIRCLES.isEmpty())
+            return;
+
+        float partialTick = event.getPartialTick();
+        PoseStack poseStack = event.getPoseStack();
+        MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
+
+        MagicCircleManager.renderCirclesForClient(poseStack, bufferSource, partialTick);
     }
 
     private static @Nullable CastInfo getCastingInfo(LivingEntity entity) {
@@ -173,7 +184,7 @@ public class MagicCircleManager {
                 CIRCLES_BY_ENTITY.put(entity, newCircle);
             }
         } else {
-            if(currentActiveCircle != null)
+            if (currentActiveCircle != null)
                 MagicCircleManager.startMagicCircleTermination(entity, currentActiveCircle);
         }
     }

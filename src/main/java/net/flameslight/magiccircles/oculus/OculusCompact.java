@@ -1,6 +1,5 @@
 package net.flameslight.magiccircles.oculus;
 
-import net.flameslight.magiccircles.datagen.logger.ModLogger;
 import net.irisshaders.iris.api.v0.IrisApi;
 
 public class OculusCompact {

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.1] - WIP
+
+### Changed
+- Abandoned vanilla transparency as it causes unwanted occlusion with sky and water, even if circle is rendered 
+as transparent. Using instead a custom code for a "fake" fade in/out using color manipulation. 
+
+### Fixed
+- Fixed circles not displayed fully when some part of it is underwater and some part of it above water
+- Fixed circles loosing opacity depending on where the caster is looking at
+- Fixed circles rendering behind clouds even if they are being close to camera
+
 ## [1.1.0] - 2026-04-11
 ### Added
 - New floor-wheel circles animations

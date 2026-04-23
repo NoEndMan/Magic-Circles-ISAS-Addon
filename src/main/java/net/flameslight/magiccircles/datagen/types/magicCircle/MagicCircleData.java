@@ -2,12 +2,15 @@ package net.flameslight.magiccircles.datagen.types.magicCircle;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.flameslight.magiccircles.datagen.Utils;
+import net.flameslight.magiccircles.datagen.render.RendererUtils;
 import net.flameslight.magiccircles.datagen.types.CirclesStyle;
 import net.flameslight.magiccircles.datagen.types.EntitySnapshot;
 import net.flameslight.magiccircles.datagen.types.transformations.TransformManager;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 
 public class MagicCircleData {
     public static final float MAX_OPACITY = 1f;
@@ -18,6 +21,7 @@ public class MagicCircleData {
     public final int light;
     public final String castedSpellName;
     public final EntitySnapshot caster;
+    public final LivingEntity syncedCaster;
     public final float staticSize;
 
     private final TransformManager transformManager;
@@ -35,7 +39,6 @@ public class MagicCircleData {
     private float baseR;
     private float baseG;
     private float baseB;
-    private float opacityChangePerTick;
     private float currentSize;
     private float xOffset; // positive to left
     private float zOffset; // positive to forwards
@@ -46,9 +49,9 @@ public class MagicCircleData {
     private boolean isConcealed;
 
     public MagicCircleData(TransformManager transformManager,
-                           EntitySnapshot caster,
+                           LivingEntity syncedCaster,
                            String castedSpellName,
-                           int hexColor,
+                           float[] RGBColor,
                            RenderType renderType,
                            float staticSize,
                            float rotationChange,
@@ -63,20 +66,19 @@ public class MagicCircleData {
         this.isFadingIn = false;
         this.isFadingOut = false;
         this.isConcealed = false;
-        this.opacityChangePerTick = 0f;
         this.currentSize = staticSize;
-        this.finalTicks = 0;
+        this.finalTicks = 1;
+        this.ticks = 0;
         this.rotation = 0;
         this.lastFullTicks = 0;
 
-        float[] color = Utils.extractRGBFromHexColor(hexColor);
-
-        this.baseR = color[0];
-        this.baseG = color[1];
-        this.baseB = color[2];
+        this.baseR = RGBColor[0];
+        this.baseG = RGBColor[1];
+        this.baseB = RGBColor[2];
 
         this.transformManager = transformManager;
-        this.caster = caster;
+        this.caster = new EntitySnapshot(syncedCaster);
+        this.syncedCaster = syncedCaster;
         this.castedSpellName = castedSpellName;
         this.renderType = renderType;
         this.light = light;
@@ -96,34 +98,26 @@ public class MagicCircleData {
         if (isFadingIn) {
             this.isConcealed = false;
 
-            if(this.initTicks < this.initTotalTicks)
+            if(this.initTicks <= this.initTotalTicks)
                 this.initTicks++;
-
-            if (this.opacity < MAX_OPACITY)
-                this.opacity = Math.min(MAX_OPACITY, this.opacity + opacityChangePerTick);
             else
                 this.isFadingIn = false;
         } else if (isFadingOut) {
-            if(this.finalTicks < this.finalTotalTicks)
+            if(this.finalTicks <= this.finalTotalTicks)
                 this.finalTicks++;
-
-            if (this.opacity > MIN_OPACITY) {
-                this.opacity = Math.max(MIN_OPACITY, this.opacity + opacityChangePerTick);
-            } else {
-                isFadingOut = false;
-
+            else {
                 this.isConcealed = true;
+
+                isFadingOut = false;
             }
         }
     }
 
     public void startInitElseTermination(boolean fadeInElseOut) {
         if(fadeInElseOut) {
-            this.opacityChangePerTick = (MAX_OPACITY - opacity) / this.initTotalTicks;
             this.isFadingIn = true;
             this.isFadingOut = false;
         } else {
-            this.opacityChangePerTick = (MIN_OPACITY - opacity) / this.finalTotalTicks;
             this.isFadingIn = false;
             this.isFadingOut = true;
         }
@@ -134,17 +128,17 @@ public class MagicCircleData {
     }
 
     public void executePermanentDataTransforms(EntitySnapshot entitySnapshot, float newPartialTicks) {
-        this.transformManager.executePermanentDataTransformations(entitySnapshot, this, this.ticks + newPartialTicks);
+        this.transformManager.executePermanentDataTransformations(entitySnapshot, this, this.getTicksDifferenceFromLastFullTicks(newPartialTicks), this.ticks + newPartialTicks);
     }
 
     public void executeInitTransforms(EntitySnapshot entitySnapshot, float newPartialTicks) {
         if(this.isFadingIn)
-            this.transformManager.executeInitTransformations(entitySnapshot, this, this.initTicks + newPartialTicks, this.initTotalTicks);
+            this.transformManager.executeInitTransformations(entitySnapshot, this, this.getTicksDifferenceFromLastFullTicks(newPartialTicks), this.initTicks + newPartialTicks);
     }
 
     public void executeFinalTransforms(EntitySnapshot entitySnapshot, float newPartialTicks) {
         if(this.isFadingOut)
-            this.transformManager.executeFinalTransformations(entitySnapshot, this, this.finalTicks + newPartialTicks, this.finalTotalTicks);
+            this.transformManager.executeFinalTransformations(entitySnapshot, this, this.getTicksDifferenceFromLastFullTicks(newPartialTicks), this.finalTicks + newPartialTicks);
     }
 
     public boolean isConcealed() {
@@ -152,8 +146,12 @@ public class MagicCircleData {
     }
 
     /** @return [r,g,b,a] */
-    public float[] getColor() {
-        return new float[]{baseR * opacity, baseG * opacity, baseB * opacity, opacity};
+    public float[] getColor(boolean useDesaturation) {
+        if(useDesaturation)
+            return Utils.getColorDesaturationByOpacity(baseR, baseG, baseB, opacity);
+
+        return new float[]{baseR, baseG, baseB, opacity};
+
     }
 
     public boolean isFadingIn() {
@@ -204,11 +202,19 @@ public class MagicCircleData {
         this.lastFullTicks = lastFullTicks;
     }
 
-    public float getLastFullTicks() {
-        return this.lastFullTicks;
-    }
-
     public int getTicks() {
         return this.ticks;
+    }
+
+    public float getOpacity() {
+        return opacity;
+    }
+
+    public void setOpacity(float newOpacity) {
+        this.opacity = newOpacity;
+    }
+
+    private float getTicksDifferenceFromLastFullTicks(float newPartialTicks) {
+        return this.ticks + newPartialTicks - this.lastFullTicks;
     }
 }

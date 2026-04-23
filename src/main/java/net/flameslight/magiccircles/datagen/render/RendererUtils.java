@@ -3,11 +3,12 @@ package net.flameslight.magiccircles.datagen.render;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.flameslight.magiccircles.datagen.types.EntitySnapshot;
+import net.flameslight.magiccircles.datagen.types.magicCircle.MagicCircleData;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 public class RendererUtils {
     public static void drawQuad(PoseStack ps,
@@ -17,20 +18,31 @@ public class RendererUtils {
                                 float b,
                                 float alpha,
                                 int light,
-                                int overlay) {
+                                int overlay,
+                                Vector3f usedNormal) {
         Matrix4f matrix = ps.last().pose();
         Matrix3f normal = ps.last().normal(); // Get the normal matrix to properly orient lighting
         float size = 0.5f;
 
         // Front
-/*        builder.vertex(matrix, -size, -size, 0).color(r, g, b, alpha).uv(0, 0).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-        builder.vertex(matrix, -size, size, 0).color(r, g, b, alpha).uv(0, 1).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-        builder.vertex(matrix, size, size, 0).color(r, g, b, alpha).uv(1, 1).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();
-        builder.vertex(matrix, size, -size, 0).color(r, g, b, alpha).uv(1, 0).overlayCoords(overlay).uv2(light).normal(0, 1, 0).endVertex();*/
-        builder.vertex(matrix, -size, -size, 0).color(r, g, b, alpha).uv(0, 0).overlayCoords(overlay).uv2(light).normal(normal, 0, 0, 1).endVertex();
-        builder.vertex(matrix, -size, size, 0).color(r, g, b, alpha).uv(0, 1).overlayCoords(overlay).uv2(light).normal(normal, 0, 0, 1).endVertex();
-        builder.vertex(matrix, size, size, 0).color(r, g, b, alpha).uv(1, 1).overlayCoords(overlay).uv2(light).normal(normal, 0, 0, 1).endVertex();
-        builder.vertex(matrix, size, -size, 0).color(r, g, b, alpha).uv(1, 0).overlayCoords(overlay).uv2(light).normal(normal, 0, 0, 1).endVertex();
+
+        // PARTICLE format
+/*        builder.vertex(matrix, -size, -size, 0).uv(0, 0).color(r, g, b, alpha).uv2(light).endVertex();
+        builder.vertex(matrix, -size,  size, 0).uv(0, 1).color(r, g, b, alpha).uv2(light).endVertex();
+        builder.vertex(matrix,  size,  size, 0).uv(1, 1).color(r, g, b, alpha).uv2(light).endVertex();
+        builder.vertex(matrix,  size, -size, 0).uv(1, 0).color(r, g, b, alpha).uv2(light).endVertex();*/
+
+        // NEW ENTITY format
+        builder.vertex(matrix, -size, -size, 0).color(r, g, b, alpha).uv(0, 0).overlayCoords(overlay).uv2(light).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
+        builder.vertex(matrix, -size,  size, 0).color(r, g, b, alpha).uv(0, 1).overlayCoords(overlay).uv2(light).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
+        builder.vertex(matrix,  size,  size, 0).color(r, g, b, alpha).uv(1, 1).overlayCoords(overlay).uv2(light).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
+        builder.vertex(matrix,  size, -size, 0).color(r, g, b, alpha).uv(1, 0).overlayCoords(overlay).uv2(light).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
+
+        // POSITION_COLOR_TEX Format: position -> color -> uv
+/*        builder.vertex(matrix, -size, -size, 0).color(r, g, b, alpha).uv(0, 0).endVertex();
+        builder.vertex(matrix, -size,  size, 0).color(r, g, b, alpha).uv(0, 1).endVertex();
+        builder.vertex(matrix,  size,  size, 0).color(r, g, b, alpha).uv(1, 1).endVertex();
+        builder.vertex(matrix,  size, -size, 0).color(r, g, b, alpha).uv(1, 0).endVertex();*/
     }
 
     /**
@@ -80,5 +92,21 @@ public class RendererUtils {
     public static void makeElementToFaceCaster(PoseStack poseStack, float yRotDegrees, float xRotDegrees) {
         poseStack.mulPose(Axis.YP.rotationDegrees(-yRotDegrees));
         poseStack.mulPose(Axis.XP.rotationDegrees(xRotDegrees));
+    }
+
+    public static Vector3f getNormalForAlwaysGlowing(MagicCircleData magicCircleData, EntitySnapshot caster) {
+        Vector3f localNormal = new Vector3f(0, 1, 0);
+
+        // 2. Reverse the rotations you applied to the PoseStack.
+        // To invert a rotation sequence (e.g., Y then X), you apply negative angles in reverse order (X then Y).
+/*        localNormal.rotateZ((float) Math.toRadians(-magicCircleData.getRotation()));
+        localNormal.rotateX((float) Math.toRadians(-caster.xRot));
+        localNormal.rotateY((float) Math.toRadians(caster.yRot));*/
+
+        localNormal.rotateY((float) Math.toRadians(caster.yRot));
+        localNormal.rotateX((float) Math.toRadians(-caster.xRot));
+        localNormal.rotateZ((float) Math.toRadians(-magicCircleData.getRotation()));
+
+        return localNormal;
     }
 }

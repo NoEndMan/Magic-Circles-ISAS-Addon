@@ -1,12 +1,10 @@
 package net.flameslight.magiccircles.datagen.events;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.flameslight.magiccircles.MagicCircles;
 import net.flameslight.magiccircles.datagen.MagicCircleManager;
 import net.flameslight.magiccircles.datagen.render.MagicCirclesRender;
 import net.flameslight.magiccircles.oculus.OculusCompact;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -37,8 +35,8 @@ public class ClientEvents {
 
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
-        // Only render during the translucent stage — matches the render type
-        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) return;
+        // The timing of when to render
+        if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
 
         // Skip Oculus shadow/reflection passes — this is what causes the ghost duplicate
         if (OculusCompact.isRenderingShadowPass()) return;
@@ -46,14 +44,7 @@ public class ClientEvents {
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null) return;
 
-        // Use the PoseStack provided by the event
-        PoseStack poseStack = event.getPoseStack();
-
-        // Use the main buffer source
-        MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
-
-        // Render for all players
-        MagicCircleManager.renderMagicCircleForClient(poseStack, bufferSource, event.getPartialTick());
+        MagicCircleManager.preRenderCircles(mc, event);
     }
 
     @SubscribeEvent
