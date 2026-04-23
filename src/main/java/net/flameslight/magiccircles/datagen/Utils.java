@@ -37,20 +37,6 @@ public class Utils {
         float finalB = lerpB * easeOpacity;
 
         return new float[]{finalR, finalG, finalB, opacity};
-
-/*        // 2. Convert to HSL
-        float[] hsl = rgbToHsl(baseR, baseG, baseB);
-
-        // 3. Desaturate: S channel drops directly toward 0 (pure gray)
-        //    Much cleaner than blending toward a luminance gray in RGB
-        hsl[1] *= easeOpacity;
-
-        // 4. Dim: L channel scales toward black
-        hsl[2] *= easeOpacity;
-
-        // 5. Convert back - hue is completely untouched
-        float[] rgb = hslToRgb(hsl[0], hsl[1], hsl[2]);
-        return new float[]{ rgb[0], rgb[1], rgb[2], opacity };*/
     }
 
     /**

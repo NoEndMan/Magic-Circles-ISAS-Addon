@@ -98,7 +98,7 @@ public class MagicCirclesRender extends RenderType {
                 // use for vanilla
                 CompositeState state = CompositeState.builder()
                         // glowing transparent shader
-                        .setShaderState(RenderStateShard.RENDERTYPE_ENTITY_CUTOUT_SHADER)
+                        .setShaderState(RenderStateShard.RENDERTYPE_ENTITY_SOLID_SHADER)
 
                         // texture, blur (to allow blur) and mipmap (to allow texture scaling down)
                         .setTextureState(new TextureStateShard(tex, false, false))
@@ -107,7 +107,7 @@ public class MagicCirclesRender extends RenderType {
                             transparency state of circle.
                             No opacity since vanilla opacity is buggy with clouds, water and water mask
 
-                            Additive cause color tint by background which is not desired.
+                            Additive causes color tint by background which is not desired.
                          */
                         .setTransparencyState(RenderStateShard.NO_TRANSPARENCY)
 

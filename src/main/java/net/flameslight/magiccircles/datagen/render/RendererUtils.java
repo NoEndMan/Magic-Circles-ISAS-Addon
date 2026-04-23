@@ -26,23 +26,11 @@ public class RendererUtils {
 
         // Front
 
-        // PARTICLE format
-/*        builder.vertex(matrix, -size, -size, 0).uv(0, 0).color(r, g, b, alpha).uv2(light).endVertex();
-        builder.vertex(matrix, -size,  size, 0).uv(0, 1).color(r, g, b, alpha).uv2(light).endVertex();
-        builder.vertex(matrix,  size,  size, 0).uv(1, 1).color(r, g, b, alpha).uv2(light).endVertex();
-        builder.vertex(matrix,  size, -size, 0).uv(1, 0).color(r, g, b, alpha).uv2(light).endVertex();*/
-
         // NEW ENTITY format
         builder.vertex(matrix, -size, -size, 0).color(r, g, b, alpha).uv(0, 0).overlayCoords(overlay).uv2(light).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
         builder.vertex(matrix, -size,  size, 0).color(r, g, b, alpha).uv(0, 1).overlayCoords(overlay).uv2(light).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
         builder.vertex(matrix,  size,  size, 0).color(r, g, b, alpha).uv(1, 1).overlayCoords(overlay).uv2(light).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
         builder.vertex(matrix,  size, -size, 0).color(r, g, b, alpha).uv(1, 0).overlayCoords(overlay).uv2(light).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
-
-        // POSITION_COLOR_TEX Format: position -> color -> uv
-/*        builder.vertex(matrix, -size, -size, 0).color(r, g, b, alpha).uv(0, 0).endVertex();
-        builder.vertex(matrix, -size,  size, 0).color(r, g, b, alpha).uv(0, 1).endVertex();
-        builder.vertex(matrix,  size,  size, 0).color(r, g, b, alpha).uv(1, 1).endVertex();
-        builder.vertex(matrix,  size, -size, 0).color(r, g, b, alpha).uv(1, 0).endVertex();*/
     }
 
     /**
@@ -97,12 +85,7 @@ public class RendererUtils {
     public static Vector3f getNormalForAlwaysGlowing(MagicCircleData magicCircleData, EntitySnapshot caster) {
         Vector3f localNormal = new Vector3f(0, 1, 0);
 
-        // 2. Reverse the rotations you applied to the PoseStack.
-        // To invert a rotation sequence (e.g., Y then X), you apply negative angles in reverse order (X then Y).
-/*        localNormal.rotateZ((float) Math.toRadians(-magicCircleData.getRotation()));
-        localNormal.rotateX((float) Math.toRadians(-caster.xRot));
-        localNormal.rotateY((float) Math.toRadians(caster.yRot));*/
-
+        // Reverse the rotations you applied to the PoseStack.
         localNormal.rotateY((float) Math.toRadians(caster.yRot));
         localNormal.rotateX((float) Math.toRadians(-caster.xRot));
         localNormal.rotateZ((float) Math.toRadians(-magicCircleData.getRotation()));
