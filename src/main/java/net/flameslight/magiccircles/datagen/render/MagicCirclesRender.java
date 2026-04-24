@@ -97,8 +97,8 @@ public class MagicCirclesRender extends RenderType {
 
                 // use for vanilla
                 CompositeState state = CompositeState.builder()
-                        // glowing transparent shader
-                        .setShaderState(RenderStateShard.RENDERTYPE_ENTITY_SOLID_SHADER)
+                        // need the cutout so no black background would appear
+                        .setShaderState(RenderStateShard.RENDERTYPE_ENTITY_CUTOUT_SHADER)
 
                         // texture, blur (to allow blur) and mipmap (to allow texture scaling down)
                         .setTextureState(new TextureStateShard(tex, false, false))
