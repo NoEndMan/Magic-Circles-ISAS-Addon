@@ -1,7 +1,5 @@
 package net.flameslight.magiccircles.datagen.types.transformations.data;
 
-import net.flameslight.magiccircles.datagen.logger.ModLogger;
-
 /**
  * Changes the magic circle data over time (called per tick)
  */
@@ -36,7 +34,6 @@ public class DataTransformAnimations {
                     float change = neededOpacityChangePerTick * tickDifference;
                     newOpacity = change + currentOpacity;
                 }
-                ModLogger.info("transformPassedTicks: {}, opacity: {}", transformPassedTicks, newOpacity);
 
                 magicCircleData.setOpacity(newOpacity);
             }
@@ -67,5 +64,17 @@ public class DataTransformAnimations {
 
             magicCircleData.setRotation(newRotation);
         };
+    }
+
+    public static DataTransformExecutable getFacingCasterViewExecutable() {
+        return (entitySnapshot, magicCircleData, tickDifference, passedTransformFullTicks) -> {
+            magicCircleData.setYRotation(-entitySnapshot.yRot);
+            magicCircleData.setXRotation(entitySnapshot.xRot);
+        };
+    }
+
+    public static DataTransformExecutable getGroundFacingExecutable() {
+        return (entitySnapshot, magicCircleData, tickDifference, passedTransformFullTicks) ->
+            magicCircleData.setXRotation(90);
     }
 }

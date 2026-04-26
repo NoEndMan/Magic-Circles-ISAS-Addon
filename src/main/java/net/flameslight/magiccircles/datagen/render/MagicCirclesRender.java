@@ -167,20 +167,19 @@ public class MagicCirclesRender extends RenderType {
 
         magicCircleData.executeInitTransforms(caster, newPartialTick);
         magicCircleData.executeFinalTransforms(caster, newPartialTick);
+        magicCircleData.executeUntilFinalDataTransforms(caster, newPartialTick);
         magicCircleData.executePermanentRenderTransforms(poseStack, caster, newPartialTick);
         magicCircleData.executePermanentDataTransforms(caster, newPartialTick);
 
         VertexConsumer vertexConsumer = bufferSource.getBuffer(renderType);
         float[] color = magicCircleData.getColor(true);
-        Vector3f usedNormal = RendererUtils.getNormalForAlwaysGlowing(magicCircleData, caster);
+        Vector3f usedNormal = RendererUtils.getNormalForAlwaysGlowing(magicCircleData);
         RendererUtils.drawQuad(poseStack,
                 vertexConsumer,
                 color[0],
                 color[1],
                 color[2],
                 color[3],
-                magicCircleData.light,
-                magicCircleData.overlay,
                 usedNormal);
 
         magicCircleData.setLastFullTicks(passedGameTicksForCircle + newPartialTick);

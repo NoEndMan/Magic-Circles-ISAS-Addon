@@ -5,6 +5,8 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.flameslight.magiccircles.datagen.types.EntitySnapshot;
 import net.flameslight.magiccircles.datagen.types.magicCircle.MagicCircleData;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
@@ -17,8 +19,6 @@ public class RendererUtils {
                                 float g,
                                 float b,
                                 float alpha,
-                                int light,
-                                int overlay,
                                 Vector3f usedNormal) {
         Matrix4f matrix = ps.last().pose();
         Matrix3f normal = ps.last().normal(); // Get the normal matrix to properly orient lighting
@@ -27,16 +27,15 @@ public class RendererUtils {
         // Front
 
         // NEW ENTITY format
-        builder.vertex(matrix, -size, -size, 0).color(r, g, b, alpha).uv(0, 0).overlayCoords(overlay).uv2(light).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
-        builder.vertex(matrix, -size,  size, 0).color(r, g, b, alpha).uv(0, 1).overlayCoords(overlay).uv2(light).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
-        builder.vertex(matrix,  size,  size, 0).color(r, g, b, alpha).uv(1, 1).overlayCoords(overlay).uv2(light).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
-        builder.vertex(matrix,  size, -size, 0).color(r, g, b, alpha).uv(1, 0).overlayCoords(overlay).uv2(light).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
+        builder.vertex(matrix, -size, -size, 0).color(r, g, b, alpha).uv(0, 0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
+        builder.vertex(matrix, -size,  size, 0).color(r, g, b, alpha).uv(0, 1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
+        builder.vertex(matrix,  size,  size, 0).color(r, g, b, alpha).uv(1, 1).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
+        builder.vertex(matrix,  size, -size, 0).color(r, g, b, alpha).uv(1, 0).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(LightTexture.FULL_BRIGHT).normal(normal, usedNormal.x(), usedNormal.y(), usedNormal.z()).endVertex();
     }
 
     /**
-     * Applying rotation and translate so element would face view direction no matter from where looked.
+     * Applying translate so element would face view direction no matter from where looked.
      * On 2D screen it would look like it doesn't move.
-     * @param poseStack
      * @param xOffset
      * @param yOffset
      * @param zOffset
@@ -45,8 +44,7 @@ public class RendererUtils {
      * @param xRotDegrees Pitch - rotation around x axis (up/down)
      * @return new cords of element after look rotation
      */
-    public static Vec3 getBillboardElementPositioning(PoseStack poseStack,
-                                                      float xOffset,
+    public static Vec3 getBillboardElementPositioning(float xOffset,
                                                       float yOffset,
                                                       float zOffset,
                                                       float initialHeight,
@@ -71,23 +69,20 @@ public class RendererUtils {
         double z2 = -x1 * sinYaw + z1 * cosYaw;
         double y2 = y1 + initialHeight;
 
-        poseStack.translate(x2, y2, z2);
-
         return new Vec3(x2, y2, z2);
     }
 
-    /** Apply Rotation to match entity view */
-    public static void makeElementToFaceCaster(PoseStack poseStack, float yRotDegrees, float xRotDegrees) {
-        poseStack.mulPose(Axis.YP.rotationDegrees(-yRotDegrees));
-        poseStack.mulPose(Axis.XP.rotationDegrees(xRotDegrees));
-    }
-
-    public static Vector3f getNormalForAlwaysGlowing(MagicCircleData magicCircleData, EntitySnapshot caster) {
+    /**
+     * Calculating a normal facing (0, 1, 0) by applying inverse rotations
+     * @param magicCircleData
+     * @return normal facing (0, 1, 0) after circle rotations
+     */
+    public static Vector3f getNormalForAlwaysGlowing(MagicCircleData magicCircleData) {
         Vector3f localNormal = new Vector3f(0, 1, 0);
 
         // Reverse the rotations you applied to the PoseStack.
-        localNormal.rotateY((float) Math.toRadians(caster.yRot));
-        localNormal.rotateX((float) Math.toRadians(-caster.xRot));
+        localNormal.rotateY((float) Math.toRadians(-magicCircleData.getYRotation()));
+        localNormal.rotateX((float) Math.toRadians(-magicCircleData.getXRotation()));
         localNormal.rotateZ((float) Math.toRadians(-magicCircleData.getRotation()));
 
         return localNormal;

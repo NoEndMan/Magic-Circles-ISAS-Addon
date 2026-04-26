@@ -111,10 +111,11 @@ public class MagicCircleFactory {
             animationManager.addInitTransformation(DataTransformAnimations.getGradualScalingExecutable(usedSize + 12f, UNDER_PLAYER_FADE_IN_TICKS));
             animationManager.addInitTransformation(DataTransformAnimations.getGradualRotationPerTick(2f, 6, UNDER_PLAYER_FADE_IN_TICKS));
 
+            animationManager.addPermanentDataTransformation(DataTransformAnimations.getGroundFacingExecutable());
             animationManager.addPermanentDataTransformation(DataTransformAnimations.getConstantRotatedCircleExecutable());
 
             animationManager.addPermanentRenderTransformation(RenderAnimations.getSyncedPositionedExecutable());
-            animationManager.addPermanentRenderTransformation(RenderAnimations.getGroundFacingExecutable());
+            animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentFacingRotationExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentSizeScalingExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentRotationExecutable());
 
@@ -138,9 +139,11 @@ public class MagicCircleFactory {
 
             animationManager.addInitTransformation(DataTransformAnimations.getGradualOpacityChangeExecutable(1f, HAND_CIRCLE_FADE_IN_TICKS));
 
+            animationManager.addPermanentDataTransformation(DataTransformAnimations.getFacingCasterViewExecutable());
             animationManager.addPermanentDataTransformation(DataTransformAnimations.getConstantRotatedCircleExecutable());
 
-            animationManager.addPermanentRenderTransformation(RenderAnimations.getCasterBillboardBehaviorExecutable());
+            animationManager.addPermanentRenderTransformation(RenderAnimations.getCasterBillboardPositionExecutable());
+            animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentFacingRotationExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentSizeScalingExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentRotationExecutable());
 
@@ -158,9 +161,7 @@ public class MagicCircleFactory {
                 zOffset,
                 yOffset,
                 usedFadeInTicks,
-                usedFadeOutTicks,
-                light,
-                overlay);
+                usedFadeOutTicks);
     }
 
     private static int getColorFromSchool(SchoolType school) {

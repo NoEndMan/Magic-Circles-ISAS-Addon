@@ -2,14 +2,9 @@ package net.flameslight.magiccircles.datagen.types.magicCircle;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.flameslight.magiccircles.datagen.Utils;
-import net.flameslight.magiccircles.datagen.render.RendererUtils;
-import net.flameslight.magiccircles.datagen.types.CirclesStyle;
 import net.flameslight.magiccircles.datagen.types.EntitySnapshot;
 import net.flameslight.magiccircles.datagen.types.transformations.TransformManager;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 
 public class MagicCircleData {
@@ -17,8 +12,6 @@ public class MagicCircleData {
     public static final float MIN_OPACITY = 0.001f;
 
     public final RenderType renderType;
-    public final int overlay;
-    public final int light;
     public final String castedSpellName;
     public final EntitySnapshot caster;
     public final LivingEntity syncedCaster;
@@ -36,6 +29,8 @@ public class MagicCircleData {
     private float lastFullTicks;
     private float rotation;
     private float rotationChange;
+    private float xRotation;
+    private float yRotation;
     private float baseR;
     private float baseG;
     private float baseB;
@@ -59,9 +54,7 @@ public class MagicCircleData {
                            float zOffset,
                            float yOffset,
                            int initTotalTicks,
-                           int finalTotalTicks,
-                           int light,
-                           int overlay) {
+                           int finalTotalTicks) {
         this.opacity = MIN_OPACITY;
         this.isFadingIn = false;
         this.isFadingOut = false;
@@ -70,6 +63,8 @@ public class MagicCircleData {
         this.finalTicks = 1;
         this.ticks = 0;
         this.rotation = 0;
+        this.xRotation = 0;
+        this.yRotation = 0;
         this.lastFullTicks = 0;
 
         this.baseR = RGBColor[0];
@@ -81,8 +76,6 @@ public class MagicCircleData {
         this.syncedCaster = syncedCaster;
         this.castedSpellName = castedSpellName;
         this.renderType = renderType;
-        this.light = light;
-        this.overlay = overlay;
         this.staticSize = staticSize;
         this.rotationChange = rotationChange;
         this.xOffset = xOffset;
@@ -125,6 +118,11 @@ public class MagicCircleData {
 
     public void executePermanentRenderTransforms(PoseStack poseStack, EntitySnapshot entitySnapshot, float partialTick) {
         this.transformManager.executeRenderTransformations(poseStack, entitySnapshot, this, partialTick);
+    }
+
+    public void executeUntilFinalDataTransforms(EntitySnapshot entitySnapshot, float newPartialTicks) {
+        if(!this.isFadingOut && !this.isConcealed)
+            this.transformManager.executeUntilFinalTransformations(entitySnapshot, this, this.getTicksDifferenceFromLastFullTicks(newPartialTicks), this.ticks + newPartialTicks);
     }
 
     public void executePermanentDataTransforms(EntitySnapshot entitySnapshot, float newPartialTicks) {
@@ -212,6 +210,22 @@ public class MagicCircleData {
 
     public void setOpacity(float newOpacity) {
         this.opacity = newOpacity;
+    }
+
+    public float getXRotation() {
+        return xRotation;
+    }
+
+    public void setXRotation(float xRotation) {
+        this.xRotation = xRotation;
+    }
+
+    public float getYRotation() {
+        return yRotation;
+    }
+
+    public void setYRotation(float yRotation) {
+        this.yRotation = yRotation;
     }
 
     private float getTicksDifferenceFromLastFullTicks(float newPartialTicks) {

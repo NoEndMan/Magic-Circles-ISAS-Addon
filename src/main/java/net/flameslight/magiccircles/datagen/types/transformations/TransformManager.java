@@ -14,16 +14,19 @@ import java.util.ArrayList;
  * 2. per tick - every other
  */
 public class TransformManager {
-    // applied at circle init until a certain tick
+    // applies at circle init until a certain tick
     private final ArrayList<DataTransformExecutable> initTransformations = new ArrayList<>();
 
-    // applied at a certain time before circle termination until the circle termination
+    // applies at circle init until calling for circle termination (before termination).
+    private final ArrayList<DataTransformExecutable> untilFinalTransformations = new ArrayList<>();
+
+    // applies at a certain time before circle termination until the circle termination
     private final ArrayList<DataTransformExecutable> finalTransformations = new ArrayList<>();
 
-    // applied all the time until circle termination per tick
+    // applies all the time until circle termination per tick
     private final ArrayList<DataTransformExecutable> dataTransformations = new ArrayList<>();
 
-    // applied all the time until circle termination per render
+    // applies all the time until circle termination per render
     private final ArrayList<RenderTransformExecutable> renderTransformations = new ArrayList<>();
 
     public void executeInitTransformations(EntitySnapshot entitySnapshot,
@@ -59,6 +62,17 @@ public class TransformManager {
                 passedTransformFullTicks));
     }
 
+    public void executeUntilFinalTransformations(EntitySnapshot entitySnapshot,
+                                                 MagicCircleData data,
+                                                 float ticksDifferenceFromLastCall,
+                                                 float passedTransformFullTicks) {
+        this.untilFinalTransformations.forEach(animation -> animation.execute(
+                entitySnapshot,
+                data,
+                ticksDifferenceFromLastCall,
+                passedTransformFullTicks));
+    }
+
     public void executeRenderTransformations(PoseStack poseStack,
                                              EntitySnapshot entitySnapshot,
                                              MagicCircleData data,
@@ -72,6 +86,10 @@ public class TransformManager {
 
     public void addInitTransformation(DataTransformExecutable executable) {
         this.initTransformations.add(executable);
+    }
+
+    public void addUntilFinalTransformation(DataTransformExecutable executable) {
+        this.untilFinalTransformations.add(executable);
     }
 
     public void addFinalTransformation(DataTransformExecutable executable) {

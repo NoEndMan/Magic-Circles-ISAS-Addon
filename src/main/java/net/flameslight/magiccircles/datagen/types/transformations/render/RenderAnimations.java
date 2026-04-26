@@ -16,6 +16,13 @@ public class RenderAnimations {
             poseStack.mulPose(Axis.ZP.rotationDegrees(magicCircleData.getRotation()));
     }
 
+    public static RenderTransformExecutable getCurrentFacingRotationExecutable() {
+        return (poseStack, entitySnapshot, magicCircleData, partialTick) -> {
+            poseStack.mulPose(Axis.YP.rotationDegrees(magicCircleData.getYRotation()));
+            poseStack.mulPose(Axis.XP.rotationDegrees(magicCircleData.getXRotation()));
+        };
+    }
+
     public static RenderTransformExecutable getCasterBottomPositionRelativeWorldSpaceExecutable() {
         return (poseStack, entitySnapshot, magicCircleData, partialTick) -> {
             // 1. Get interpolated position
@@ -36,12 +43,7 @@ public class RenderAnimations {
         };
     }
 
-    public static RenderTransformExecutable getGroundFacingExecutable() {
-        return (poseStack, entitySnapshot, magicCircleData, partialTick) ->
-                poseStack.mulPose(Axis.XP.rotationDegrees(90));
-    }
-
-    public static RenderTransformExecutable getCasterBillboardBehaviorExecutable() {
+    public static RenderTransformExecutable getCasterBillboardPositionExecutable() {
         return (poseStack, entitySnapshot, magicCircleData, partialTick) -> {
             // Yaw - rotation around y-axis (left/right)
             float yRot = Mth.lerp(partialTick, entitySnapshot.yRotO, entitySnapshot.yRot);
@@ -49,14 +51,14 @@ public class RenderAnimations {
             // Pitch - rotation around x-axis (up/down)
             float xRot = Mth.lerp(partialTick, entitySnapshot.xRotO, entitySnapshot.xRot);
 
-            RendererUtils.getBillboardElementPositioning(poseStack,
-                    magicCircleData.getXOffset(),
+            Vec3 position = RendererUtils.getBillboardElementPositioning(magicCircleData.getXOffset(),
                     magicCircleData.getYOffset(),
                     magicCircleData.getZOffset(),
                     entitySnapshot.eyeHeight,
                     yRot,
                     xRot);
-            RendererUtils.makeElementToFaceCaster(poseStack, entitySnapshot.yRot, entitySnapshot.xRot);
+
+            poseStack.translate(position.x, position.y, position.z);
         };
     }
 
