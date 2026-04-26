@@ -17,14 +17,17 @@ public class TransformManager {
     // applies at circle init until a certain tick
     private final ArrayList<DataTransformExecutable> initTransformations = new ArrayList<>();
 
-    // applies at circle init until calling for circle termination (before termination).
-    private final ArrayList<DataTransformExecutable> untilFinalTransformations = new ArrayList<>();
-
     // applies at a certain time before circle termination until the circle termination
-    private final ArrayList<DataTransformExecutable> finalTransformations = new ArrayList<>();
+    private final ArrayList<DataTransformExecutable> finalDataTransformations = new ArrayList<>();
 
     // applies all the time until circle termination per tick
     private final ArrayList<DataTransformExecutable> dataTransformations = new ArrayList<>();
+
+    // applies from circle termination calling until circle termination
+    private final ArrayList<RenderTransformExecutable> untilFinalRenderTransformations = new ArrayList<>();
+
+    // applies from circle termination calling until circle termination
+    private final ArrayList<RenderTransformExecutable> finalRenderTransformations = new ArrayList<>();
 
     // applies all the time until circle termination per render
     private final ArrayList<RenderTransformExecutable> renderTransformations = new ArrayList<>();
@@ -40,11 +43,11 @@ public class TransformManager {
                 passedTransformFullTicks));
     }
 
-    public void executeFinalTransformations(EntitySnapshot entitySnapshot,
-                                            MagicCircleData data,
-                                            float ticksDifferenceFromLastCall,
-                                            float passedTransformFullTicks) {
-        this.finalTransformations.forEach(animation -> animation.execute(
+    public void executeFinalDataTransformations(EntitySnapshot entitySnapshot,
+                                                MagicCircleData data,
+                                                float ticksDifferenceFromLastCall,
+                                                float passedTransformFullTicks) {
+        this.finalDataTransformations.forEach(animation -> animation.execute(
                 entitySnapshot,
                 data,
                 ticksDifferenceFromLastCall,
@@ -62,15 +65,26 @@ public class TransformManager {
                 passedTransformFullTicks));
     }
 
-    public void executeUntilFinalTransformations(EntitySnapshot entitySnapshot,
-                                                 MagicCircleData data,
-                                                 float ticksDifferenceFromLastCall,
-                                                 float passedTransformFullTicks) {
-        this.untilFinalTransformations.forEach(animation -> animation.execute(
+    public void executeUntilFinalRenderTransformations(PoseStack poseStack,
+                                                       EntitySnapshot entitySnapshot,
+                                                       MagicCircleData data,
+                                                       float partialTicks) {
+        this.untilFinalRenderTransformations.forEach(animation -> animation.execute(
+                poseStack,
                 entitySnapshot,
                 data,
-                ticksDifferenceFromLastCall,
-                passedTransformFullTicks));
+                partialTicks));
+    }
+
+    public void executeFinalRenderTransformations(PoseStack poseStack,
+                                             EntitySnapshot entitySnapshot,
+                                             MagicCircleData data,
+                                             float partialTicks) {
+        this.finalRenderTransformations.forEach(animation -> animation.execute(
+                poseStack,
+                entitySnapshot,
+                data,
+                partialTicks));
     }
 
     public void executeRenderTransformations(PoseStack poseStack,
@@ -88,12 +102,8 @@ public class TransformManager {
         this.initTransformations.add(executable);
     }
 
-    public void addUntilFinalTransformation(DataTransformExecutable executable) {
-        this.untilFinalTransformations.add(executable);
-    }
-
-    public void addFinalTransformation(DataTransformExecutable executable) {
-        this.finalTransformations.add(executable);
+    public void addFinalDataTransformation(DataTransformExecutable executable) {
+        this.finalDataTransformations.add(executable);
     }
 
     public void addPermanentDataTransformation(DataTransformExecutable executable) {
@@ -102,5 +112,13 @@ public class TransformManager {
 
     public void addPermanentRenderTransformation(RenderTransformExecutable executable) {
         this.renderTransformations.add(executable);
+    }
+
+    public void addUntilFinalRenderTransformation(RenderTransformExecutable executable) {
+        this.untilFinalRenderTransformations.add(executable);
+    }
+
+    public void addFinalRenderTransformation(RenderTransformExecutable executable) {
+        this.finalRenderTransformations.add(executable);
     }
 }

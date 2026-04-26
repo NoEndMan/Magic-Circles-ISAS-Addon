@@ -1,5 +1,9 @@
 package net.flameslight.magiccircles.datagen.types.transformations.data;
 
+import net.flameslight.magiccircles.datagen.render.RendererUtils;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.Vec3;
+
 /**
  * Changes the magic circle data over time (called per tick)
  */
@@ -76,5 +80,26 @@ public class DataTransformAnimations {
     public static DataTransformExecutable getGroundFacingExecutable() {
         return (entitySnapshot, magicCircleData, tickDifference, passedTransformFullTicks) ->
             magicCircleData.setXRotation(90);
+    }
+
+    public static DataTransformExecutable getCasterBillboardPositionExecutable() {
+        return (entitySnapshot, magicCircleData, tickDifference, passedTransformFullTicks) -> {
+            // Yaw - rotation around y-axis (left/right)
+            float yRot = Mth.lerp(tickDifference, entitySnapshot.yRotO, entitySnapshot.yRot);
+
+            // Pitch - rotation around x-axis (up/down)
+            float xRot = Mth.lerp(tickDifference, entitySnapshot.xRotO, entitySnapshot.xRot);
+
+            Vec3 position = RendererUtils.getBillboardElementPositioning(magicCircleData.getXOffset(),
+                    magicCircleData.getYOffset(),
+                    magicCircleData.getZOffset(),
+                    entitySnapshot.eyeHeight,
+                    yRot,
+                    xRot);
+
+            magicCircleData.setX((float) position.x);
+            magicCircleData.setY((float) position.y);
+            magicCircleData.setZ((float) position.z);
+        };
     }
 }

@@ -50,15 +50,15 @@ public class RendererUtils {
                                                       float initialHeight,
                                                       float yRotDegrees,
                                                       float xRotDegrees) {
-        float yRotRadians = (float) Math.toRadians(-yRotDegrees);
-        float xRotRadians = (float) Math.toRadians(xRotDegrees);
+        double yRotRadians = Math.toRadians(-yRotDegrees);
+        double xRotRadians = Math.toRadians(xRotDegrees);
 
         // --- Rotate around X (pitch) ---
         double cosPitch = Math.cos(xRotRadians);
         double sinPitch = Math.sin(xRotRadians);
 
-        double y1 = yOffset * cosPitch - zOffset * sinPitch;
-        double z1 = yOffset * sinPitch + zOffset * cosPitch;
+        double y1 = (yOffset * cosPitch - zOffset * sinPitch);
+        double z1 = (yOffset * sinPitch + zOffset * cosPitch);
         double x1 = xOffset;
 
         // --- Rotate around Y (yaw) ---

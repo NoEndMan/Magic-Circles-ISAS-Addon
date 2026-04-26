@@ -9,12 +9,11 @@ import net.minecraft.world.entity.LivingEntity;
 
 public class MagicCircleData {
     public static final float MAX_OPACITY = 1f;
-    public static final float MIN_OPACITY = 0.001f;
+    public static final float MIN_OPACITY = 0.35f;
 
     public final RenderType renderType;
     public final String castedSpellName;
     public final EntitySnapshot caster;
-    public final LivingEntity syncedCaster;
     public final float staticSize;
 
     private final TransformManager transformManager;
@@ -38,6 +37,9 @@ public class MagicCircleData {
     private float xOffset; // positive to left
     private float zOffset; // positive to forwards
     private float yOffset; // positive to up
+    private float x;
+    private float y;
+    private float z;
     private float opacity;
     private boolean isFadingIn;
     private boolean isFadingOut;
@@ -66,6 +68,9 @@ public class MagicCircleData {
         this.xRotation = 0;
         this.yRotation = 0;
         this.lastFullTicks = 0;
+        this.x = 0;
+        this.y = 0;
+        this.z = 0;
 
         this.baseR = RGBColor[0];
         this.baseG = RGBColor[1];
@@ -73,7 +78,6 @@ public class MagicCircleData {
 
         this.transformManager = transformManager;
         this.caster = new EntitySnapshot(syncedCaster);
-        this.syncedCaster = syncedCaster;
         this.castedSpellName = castedSpellName;
         this.renderType = renderType;
         this.staticSize = staticSize;
@@ -120,9 +124,14 @@ public class MagicCircleData {
         this.transformManager.executeRenderTransformations(poseStack, entitySnapshot, this, partialTick);
     }
 
-    public void executeUntilFinalDataTransforms(EntitySnapshot entitySnapshot, float newPartialTicks) {
+    public void executeUntilFinalRenderTransforms(PoseStack poseStack, EntitySnapshot entitySnapshot, float partialTick) {
         if(!this.isFadingOut && !this.isConcealed)
-            this.transformManager.executeUntilFinalTransformations(entitySnapshot, this, this.getTicksDifferenceFromLastFullTicks(newPartialTicks), this.ticks + newPartialTicks);
+            this.transformManager.executeUntilFinalRenderTransformations(poseStack, entitySnapshot, this, partialTick);
+    }
+
+    public void executeFinalRenderTransforms(PoseStack poseStack, EntitySnapshot entitySnapshot, float newPartialTicks) {
+        if(this.isFadingOut)
+            this.transformManager.executeFinalRenderTransformations(poseStack, entitySnapshot, this, newPartialTicks);
     }
 
     public void executePermanentDataTransforms(EntitySnapshot entitySnapshot, float newPartialTicks) {
@@ -134,9 +143,9 @@ public class MagicCircleData {
             this.transformManager.executeInitTransformations(entitySnapshot, this, this.getTicksDifferenceFromLastFullTicks(newPartialTicks), this.initTicks + newPartialTicks);
     }
 
-    public void executeFinalTransforms(EntitySnapshot entitySnapshot, float newPartialTicks) {
+    public void executeFinalDataTransforms(EntitySnapshot entitySnapshot, float newPartialTicks) {
         if(this.isFadingOut)
-            this.transformManager.executeFinalTransformations(entitySnapshot, this, this.getTicksDifferenceFromLastFullTicks(newPartialTicks), this.finalTicks + newPartialTicks);
+            this.transformManager.executeFinalDataTransformations(entitySnapshot, this, this.getTicksDifferenceFromLastFullTicks(newPartialTicks), this.finalTicks + newPartialTicks);
     }
 
     public boolean isConcealed() {
@@ -226,6 +235,30 @@ public class MagicCircleData {
 
     public void setYRotation(float yRotation) {
         this.yRotation = yRotation;
+    }
+
+    public float getX() {
+        return x;
+    }
+
+    public void setX(float x) {
+        this.x = x;
+    }
+
+    public float getY() {
+        return y;
+    }
+
+    public void setY(float y) {
+        this.y = y;
+    }
+
+    public float getZ() {
+        return z;
+    }
+
+    public void setZ(float z) {
+        this.z = z;
     }
 
     private float getTicksDifferenceFromLastFullTicks(float newPartialTicks) {

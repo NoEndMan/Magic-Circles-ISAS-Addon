@@ -12,9 +12,7 @@ import net.flameslight.magiccircles.datagen.types.transformations.TransformManag
 import net.flameslight.magiccircles.datagen.types.transformations.render.RenderAnimations;
 import net.flameslight.magiccircles.datagen.types.transformations.data.DataTransformAnimations;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
@@ -67,17 +65,12 @@ public class MagicCircleFactory {
             sizeIndex = Math.min(2, sizeIndex);
 
         ResourceLocation usedTexture;
-        int light, overlay;
         CirclesStyle usedStyle = ClientConfig.CIRCLES_STYLE.get();
 
         if(usedStyle == CirclesStyle.NEON) {
             usedTexture = TEXTURES_NEON_PER_SIZE[sizeIndex];
-            light = LightTexture.FULL_BRIGHT;
-            overlay = OverlayTexture.NO_OVERLAY;
         } else {
             usedTexture = TEXTURES_PER_SIZE[sizeIndex];
-            light = LightTexture.FULL_BRIGHT;
-            overlay = OverlayTexture.NO_OVERLAY;
         }
 
         RenderType usedRenderType = MagicCirclesRender.cachedCreateRenderType(usedTexture, usedStyle);
@@ -90,7 +83,8 @@ public class MagicCircleFactory {
         float[] colorRGB = Utils.extractRGBFromHexColor(color);
         float[] brighterColor = Utils.brighten(colorRGB[0], colorRGB[1], colorRGB[2], 0.2f);
 
-        animationManager.addPermanentRenderTransformation(RenderAnimations.getCasterBottomPositionRelativeWorldSpaceExecutable());
+        animationManager.addUntilFinalRenderTransformation(RenderAnimations.getCasterBottomPositionRelativeWorldSpaceExecutable());
+        animationManager.addFinalRenderTransformation(RenderAnimations.getWorldRelativeSpaceFromCasterPosition());
 
         if (sizeIndex > 2) {
             // --- Under Player ---
@@ -119,7 +113,7 @@ public class MagicCircleFactory {
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentSizeScalingExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentRotationExecutable());
 
-            animationManager.addFinalTransformation(DataTransformAnimations.getGradualOpacityChangeExecutable(0.35f, UNDER_PLAYER_FADE_OUT_TICKS));
+            animationManager.addFinalDataTransformation(DataTransformAnimations.getGradualOpacityChangeExecutable(0.35f, UNDER_PLAYER_FADE_OUT_TICKS));
         } else {
             if(caster instanceof LocalPlayer) {
                 // infront of player
@@ -141,13 +135,14 @@ public class MagicCircleFactory {
 
             animationManager.addPermanentDataTransformation(DataTransformAnimations.getFacingCasterViewExecutable());
             animationManager.addPermanentDataTransformation(DataTransformAnimations.getConstantRotatedCircleExecutable());
+            animationManager.addPermanentDataTransformation(DataTransformAnimations.getCasterBillboardPositionExecutable());
 
-            animationManager.addPermanentRenderTransformation(RenderAnimations.getCasterBillboardPositionExecutable());
+            animationManager.addPermanentRenderTransformation(RenderAnimations.getSyncedPositionedExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentFacingRotationExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentSizeScalingExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentRotationExecutable());
 
-            animationManager.addFinalTransformation(DataTransformAnimations.getGradualOpacityChangeExecutable(0.35f, HAND_CIRCLE_FADE_OUT_TICKS));
+            animationManager.addFinalDataTransformation(DataTransformAnimations.getGradualOpacityChangeExecutable(0.35f, HAND_CIRCLE_FADE_OUT_TICKS));
         }
 
         return new MagicCircleData(animationManager,

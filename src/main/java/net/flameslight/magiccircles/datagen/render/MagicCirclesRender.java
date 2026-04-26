@@ -166,10 +166,12 @@ public class MagicCirclesRender extends RenderType {
         RenderType renderType = magicCircleData.renderType;
 
         magicCircleData.executeInitTransforms(caster, newPartialTick);
-        magicCircleData.executeFinalTransforms(caster, newPartialTick);
-        magicCircleData.executeUntilFinalDataTransforms(caster, newPartialTick);
-        magicCircleData.executePermanentRenderTransforms(poseStack, caster, newPartialTick);
+        magicCircleData.executeFinalDataTransforms(caster, newPartialTick);
         magicCircleData.executePermanentDataTransforms(caster, newPartialTick);
+
+        magicCircleData.executeUntilFinalRenderTransforms(poseStack, caster, newPartialTick);
+        magicCircleData.executeFinalRenderTransforms(poseStack, caster, newPartialTick);
+        magicCircleData.executePermanentRenderTransforms(poseStack, caster, newPartialTick);
 
         VertexConsumer vertexConsumer = bufferSource.getBuffer(renderType);
         float[] color = magicCircleData.getColor(true);

@@ -1,7 +1,6 @@
 package net.flameslight.magiccircles.datagen.types.transformations.render;
 
 import com.mojang.math.Axis;
-import net.flameslight.magiccircles.datagen.render.RendererUtils;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
@@ -43,22 +42,13 @@ public class RenderAnimations {
         };
     }
 
-    public static RenderTransformExecutable getCasterBillboardPositionExecutable() {
+    public static RenderTransformExecutable getWorldRelativeSpaceFromCasterPosition() {
         return (poseStack, entitySnapshot, magicCircleData, partialTick) -> {
-            // Yaw - rotation around y-axis (left/right)
-            float yRot = Mth.lerp(partialTick, entitySnapshot.yRotO, entitySnapshot.yRot);
+            Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+            Vec3 camPos = camera.getPosition();
 
-            // Pitch - rotation around x-axis (up/down)
-            float xRot = Mth.lerp(partialTick, entitySnapshot.xRotO, entitySnapshot.xRot);
-
-            Vec3 position = RendererUtils.getBillboardElementPositioning(magicCircleData.getXOffset(),
-                    magicCircleData.getYOffset(),
-                    magicCircleData.getZOffset(),
-                    entitySnapshot.eyeHeight,
-                    yRot,
-                    xRot);
-
-            poseStack.translate(position.x, position.y, position.z);
+            poseStack.translate(-camPos.x, -camPos.y, -camPos.z);
+            poseStack.translate(entitySnapshot.x, entitySnapshot.y, entitySnapshot.z);
         };
     }
 
@@ -72,7 +62,9 @@ public class RenderAnimations {
 
     public static RenderTransformExecutable getSyncedPositionedExecutable() {
         return (poseStack, entitySnapshot, magicCircleData, partialTick) -> {
-            poseStack.translate(magicCircleData.getXOffset(), magicCircleData.getYOffset(), magicCircleData.getZOffset());
+            poseStack.translate(magicCircleData.getX(),
+                    magicCircleData.getY(),
+                    magicCircleData.getZ());
         };
     }
 }
