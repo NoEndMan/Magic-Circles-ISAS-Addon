@@ -7,7 +7,7 @@ public class ClientConfig {
     public static final String FILE_NAME = "magiccircles-client.toml";
     public static final ForgeConfigSpec SPEC;
 
-    public static final ForgeConfigSpec.EnumValue<CirclesStyle> CIRCLES_STYLE;
+    public static final ForgeConfigSpec.ConfigValue<String> CIRCLES_STYLE;
 
     // Hand positioned circle offsets
     public static final ForgeConfigSpec.DoubleValue X_OFFSET_FROM_CROSS;
@@ -28,29 +28,29 @@ public class ClientConfig {
         builder.comment(
                 "OLD - old circle visuals\nNEON - new circle visuals, glowing and transparent" );
         CIRCLES_STYLE = builder
-                .defineEnum("circlesStyle", CirclesStyle.NEON);
+                .define("circlesStyle", CirclesStyle.NEON.name);
 
         builder.comment("\nParameters for hand positioned circles for client casting:");
-        builder.comment("Positive is left direction from client cross" );
+        builder.comment("Positive is left direction from client cursor" );
         X_OFFSET_FROM_CROSS = builder
-                .defineInRange("xOffsetFromCross", -0.22, -Float.MAX_VALUE, Float.MAX_VALUE);
+                .defineInRange("xOffsetFromCross", 0, -Float.MAX_VALUE, Float.MAX_VALUE);
 
-        builder.comment("Positive is up direction from client cross" );
+        builder.comment("Positive is up direction from client cursor" );
         Y_OFFSET_FROM_CROSS = builder
-                .defineInRange("yOffsetFromCross", -0.2, -Float.MAX_VALUE, Float.MAX_VALUE);
+                .defineInRange("yOffsetFromCross", 0, -Float.MAX_VALUE, Float.MAX_VALUE);
 
         builder.comment("Positive is forwards direction from client screen" );
         Z_OFFSET_FROM_CROSS = builder
-                .defineInRange("zOffsetFromCross", 1.5, -Float.MAX_VALUE, Float.MAX_VALUE);
+                .defineInRange("zOffsetFromCross", 1.45, -Float.MAX_VALUE, Float.MAX_VALUE);
 
         builder.comment("\nParameters for hand positioned circles for other entities casting" );
         builder.comment("Positive is left direction when looking from entity view direction" );
         X_OFFSET_FROM_VIEW = builder
-                .defineInRange("xOffsetFromView", -0.22, -Float.MAX_VALUE, Float.MAX_VALUE);
+                .defineInRange("xOffsetFromView", 0, -Float.MAX_VALUE, Float.MAX_VALUE);
 
         builder.comment("Positive is up direction when looking from entity view direction" );
         Y_OFFSET_FROM_VIEW = builder
-                .defineInRange("yOffsetFromView", -0.2, -Float.MAX_VALUE, Float.MAX_VALUE);
+                .defineInRange("yOffsetFromView", 0, -Float.MAX_VALUE, Float.MAX_VALUE);
 
         builder.comment("Positive is forwards direction when looking from entity view direction" );
         Z_OFFSET_FROM_VIEW = builder
@@ -67,5 +67,18 @@ public class ClientConfig {
                 .defineInRange("yOffsetFromEntityBottom", 0.01, -Float.MAX_VALUE, Float.MAX_VALUE);
 
         SPEC = builder.build();
+    }
+
+    public static CirclesStyle getCircleStyle() {
+        String styleName = CIRCLES_STYLE.get();
+
+        if(styleName.equals(CirclesStyle.OLD.name))
+            return CirclesStyle.OLD;
+        else {
+            if(!styleName.equals(CirclesStyle.NEON.name))
+                CIRCLES_STYLE.set(CirclesStyle.NEON.name);
+
+            return CirclesStyle.NEON;
+        }
     }
 }

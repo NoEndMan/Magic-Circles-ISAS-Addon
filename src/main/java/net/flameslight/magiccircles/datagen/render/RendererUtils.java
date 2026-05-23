@@ -36,12 +36,13 @@ public class RendererUtils {
     /**
      * Applying translate so element would face view direction no matter from where looked.
      * On 2D screen it would look like it doesn't move.
+     *
      * @param xOffset
      * @param yOffset
      * @param zOffset
      * @param initialHeight - initial height of camera view from 0, like eyes height
-     * @param yRotDegrees Yaw - rotation around y axis (left/right)
-     * @param xRotDegrees Pitch - rotation around x axis (up/down)
+     * @param yRotDegrees   Yaw - rotation around y axis (left/right)
+     * @param xRotDegrees   Pitch - rotation around x axis (up/down)
      * @return new cords of element after look rotation
      */
     public static Vec3 getBillboardElementPositioning(float xOffset,
@@ -74,6 +75,7 @@ public class RendererUtils {
 
     /**
      * Calculating a normal facing (0, 1, 0) by applying inverse rotations
+     *
      * @param magicCircleData
      * @return normal facing (0, 1, 0) after circle rotations
      */

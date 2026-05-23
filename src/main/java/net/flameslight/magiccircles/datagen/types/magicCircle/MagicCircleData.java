@@ -4,17 +4,19 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.flameslight.magiccircles.datagen.Utils;
 import net.flameslight.magiccircles.datagen.types.EntitySnapshot;
 import net.flameslight.magiccircles.datagen.types.transformations.TransformManager;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
+
+import java.util.UUID;
 
 public class MagicCircleData {
     public static final float MAX_OPACITY = 1f;
     public static final float MIN_OPACITY = 0.35f;
 
-    public final RenderType renderType;
+    public final UUID ID;
+    public final ResourceLocation usedTexture;
     public final String castedSpellName;
     public final EntitySnapshot caster;
-    public final float staticSize;
 
     private final TransformManager transformManager;
 
@@ -49,19 +51,20 @@ public class MagicCircleData {
                            LivingEntity syncedCaster,
                            String castedSpellName,
                            float[] RGBColor,
-                           RenderType renderType,
-                           float staticSize,
+                           ResourceLocation usedTexture,
+                           float usedSize,
                            float rotationChange,
                            float xOffset,
                            float zOffset,
                            float yOffset,
                            int initTotalTicks,
-                           int finalTotalTicks) {
+                           int finalTotalTicks,
+                           UUID uuid) {
+        this.ID = uuid;
         this.opacity = MIN_OPACITY;
         this.isFadingIn = false;
         this.isFadingOut = false;
         this.isConcealed = false;
-        this.currentSize = staticSize;
         this.finalTicks = 1;
         this.ticks = 0;
         this.rotation = 0;
@@ -76,11 +79,13 @@ public class MagicCircleData {
         this.baseG = RGBColor[1];
         this.baseB = RGBColor[2];
 
+        this.currentSize = usedSize;
         this.transformManager = transformManager;
         this.caster = new EntitySnapshot(syncedCaster);
         this.castedSpellName = castedSpellName;
-        this.renderType = renderType;
-        this.staticSize = staticSize;
+/*        this.renderType = renderType;
+        this.depthRenderType = depthRenderType;*/
+        this.usedTexture = usedTexture;
         this.rotationChange = rotationChange;
         this.xOffset = xOffset;
         this.zOffset = zOffset;

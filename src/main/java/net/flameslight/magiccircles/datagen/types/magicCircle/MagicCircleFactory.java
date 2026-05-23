@@ -12,12 +12,13 @@ import net.flameslight.magiccircles.datagen.types.transformations.TransformManag
 import net.flameslight.magiccircles.datagen.types.transformations.render.RenderAnimations;
 import net.flameslight.magiccircles.datagen.types.transformations.data.DataTransformAnimations;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
+
+import java.util.UUID;
 
 public class MagicCircleFactory {
     @SuppressWarnings("removal")
@@ -38,7 +39,7 @@ public class MagicCircleFactory {
             new ResourceLocation("magiccircles", "textures/circles/old/circle_5.png")
     };
 
-    private static final float[] SIZES_BY_INDEX = new float[]{1.2f, 2.2f, 2.7f, 4f, 18f};
+    private static final float[] SIZE_INDEX_BY_TIME = new float[]{1f, 1.9f, 2.2f, 4f, 6f};
 
     public static final int HAND_CIRCLE_FADE_IN_TICKS = 4;
     public static final int UNDER_PLAYER_FADE_IN_TICKS = 24;
@@ -50,7 +51,8 @@ public class MagicCircleFactory {
 
     public static MagicCircleData buildMagicCircleData(String spellName,
                                                        LivingEntity caster,
-                                                       MagicCircleManager.CastInfo castInfo) {
+                                                       MagicCircleManager.CastInfo castInfo,
+                                                       UUID circleEntityUUID) {
         AbstractSpell spell = castInfo.spell();
         int totalCastTime = castInfo.castTime();
         CastType castType = castInfo.castType();
@@ -65,26 +67,21 @@ public class MagicCircleFactory {
             sizeIndex = Math.min(2, sizeIndex);
 
         ResourceLocation usedTexture;
-        CirclesStyle usedStyle = ClientConfig.CIRCLES_STYLE.get();
 
-        if(usedStyle == CirclesStyle.NEON) {
+        if(MagicCirclesRender.usedStyleInCache == CirclesStyle.NEON) {
             usedTexture = TEXTURES_NEON_PER_SIZE[sizeIndex];
         } else {
             usedTexture = TEXTURES_PER_SIZE[sizeIndex];
         }
 
-        RenderType usedRenderType = MagicCirclesRender.cachedCreateRenderType(usedTexture, usedStyle);
         TransformManager animationManager = new TransformManager();
-        float usedSize = SIZES_BY_INDEX[sizeIndex];
+        float usedSize = SIZE_INDEX_BY_TIME[sizeIndex];
         float xOffset, zOffset, yOffset;
         float rotationChangePerTick;
         int usedFadeInTicks, usedFadeOutTicks;
         int color = getColorFromSchool(spell.getSchoolType());
         float[] colorRGB = Utils.extractRGBFromHexColor(color);
         float[] brighterColor = Utils.brighten(colorRGB[0], colorRGB[1], colorRGB[2], 0.2f);
-
-        animationManager.addUntilFinalRenderTransformation(RenderAnimations.getCasterBottomPositionRelativeWorldSpaceExecutable());
-        animationManager.addFinalRenderTransformation(RenderAnimations.getWorldRelativeSpaceFromCasterPosition());
 
         if (sizeIndex > 2) {
             // --- Under Player ---
@@ -101,14 +98,21 @@ public class MagicCircleFactory {
             usedFadeOutTicks = UNDER_PLAYER_FADE_OUT_TICKS;
             rotationChangePerTick = 5f;
 
-            animationManager.addInitTransformation(DataTransformAnimations.getGradualOpacityChangeExecutable(1f, 6));
-            animationManager.addInitTransformation(DataTransformAnimations.getGradualScalingExecutable(usedSize + 12f, UNDER_PLAYER_FADE_IN_TICKS));
+            int targetSizeScaling;
+            if(sizeIndex == 4) {
+                targetSizeScaling = 30;
+            } else {
+                targetSizeScaling = 16;
+            }
+
+            animationManager.addInitTransformation(DataTransformAnimations.getGradualOpacityChangeExecutable(1f, 10));
+            animationManager.addInitTransformation(DataTransformAnimations.getGradualScalingExecutable(targetSizeScaling, UNDER_PLAYER_FADE_IN_TICKS));
             animationManager.addInitTransformation(DataTransformAnimations.getGradualRotationPerTick(2f, 6, UNDER_PLAYER_FADE_IN_TICKS));
 
             animationManager.addPermanentDataTransformation(DataTransformAnimations.getGroundFacingExecutable());
             animationManager.addPermanentDataTransformation(DataTransformAnimations.getConstantRotatedCircleExecutable());
 
-            animationManager.addPermanentRenderTransformation(RenderAnimations.getSyncedPositionedExecutable());
+            animationManager.addPermanentRenderTransformation(RenderAnimations.getSyncedPositionedExecutable(true));
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentFacingRotationExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentSizeScalingExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentRotationExecutable());
@@ -137,7 +141,7 @@ public class MagicCircleFactory {
             animationManager.addPermanentDataTransformation(DataTransformAnimations.getConstantRotatedCircleExecutable());
             animationManager.addPermanentDataTransformation(DataTransformAnimations.getCasterBillboardPositionExecutable());
 
-            animationManager.addPermanentRenderTransformation(RenderAnimations.getSyncedPositionedExecutable());
+            animationManager.addPermanentRenderTransformation(RenderAnimations.getSyncedPositionedExecutable(false));
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentFacingRotationExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentSizeScalingExecutable());
             animationManager.addPermanentRenderTransformation(RenderAnimations.getCurrentRotationExecutable());
@@ -149,14 +153,15 @@ public class MagicCircleFactory {
                 caster,
                 spellName,
                 brighterColor,
-                usedRenderType,
+                usedTexture,
                 usedSize,
                 rotationChangePerTick,
                 xOffset,
                 zOffset,
                 yOffset,
                 usedFadeInTicks,
-                usedFadeOutTicks);
+                usedFadeOutTicks,
+                circleEntityUUID);
     }
 
     private static int getColorFromSchool(SchoolType school) {

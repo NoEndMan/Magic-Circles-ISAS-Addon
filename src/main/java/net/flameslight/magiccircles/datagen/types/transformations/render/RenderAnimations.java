@@ -12,7 +12,7 @@ import net.minecraft.world.phys.Vec3;
 public class RenderAnimations {
     public static RenderTransformExecutable getCurrentRotationExecutable() {
         return (poseStack, entitySnapshot, magicCircleData, partialTick) ->
-            poseStack.mulPose(Axis.ZP.rotationDegrees(magicCircleData.getRotation()));
+                poseStack.mulPose(Axis.ZP.rotationDegrees(magicCircleData.getRotation()));
     }
 
     public static RenderTransformExecutable getCurrentFacingRotationExecutable() {
@@ -22,7 +22,7 @@ public class RenderAnimations {
         };
     }
 
-    public static RenderTransformExecutable getCasterBottomPositionRelativeWorldSpaceExecutable() {
+/*    public static RenderTransformExecutable getCasterBottomPositionRelativeWorldSpaceExecutable() {
         return (poseStack, entitySnapshot, magicCircleData, partialTick) -> {
             // 1. Get interpolated position
             double lerpX = Mth.lerp(partialTick, entitySnapshot.xo, entitySnapshot.x);
@@ -50,7 +50,7 @@ public class RenderAnimations {
             poseStack.translate(-camPos.x, -camPos.y, -camPos.z);
             poseStack.translate(entitySnapshot.x, entitySnapshot.y, entitySnapshot.z);
         };
-    }
+    }*/
 
     public static RenderTransformExecutable getCurrentSizeScalingExecutable() {
         return (poseStack, entitySnapshot, magicCircleData, partialTick) -> {
@@ -60,11 +60,16 @@ public class RenderAnimations {
         };
     }
 
-    public static RenderTransformExecutable getSyncedPositionedExecutable() {
+    public static RenderTransformExecutable getSyncedPositionedExecutable(boolean includeOffset) {
         return (poseStack, entitySnapshot, magicCircleData, partialTick) -> {
-            poseStack.translate(magicCircleData.getX(),
-                    magicCircleData.getY(),
-                    magicCircleData.getZ());
+            if (includeOffset)
+                poseStack.translate(magicCircleData.getX() + magicCircleData.getXOffset(),
+                        magicCircleData.getY() + magicCircleData.getYOffset(),
+                        magicCircleData.getZ() + magicCircleData.getZOffset());
+            else
+                poseStack.translate(magicCircleData.getX(),
+                        magicCircleData.getY(),
+                        magicCircleData.getZ());
         };
     }
 }
