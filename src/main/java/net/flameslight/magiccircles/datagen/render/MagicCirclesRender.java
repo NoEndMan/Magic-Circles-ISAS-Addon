@@ -197,29 +197,21 @@ public class MagicCirclesRender extends RenderType {
 
         if (isUsingShaders) {
             RenderType waterMaskRenderType = MagicCirclesRender.cachedCreateDepthRenderType(magicCircleData.usedTexture);
-            MagicCirclesRender.renderWaterMaskCircle(magicCircleData, waterMaskRenderType, poseStack, bufferSource, newPartialTick);
+            MagicCirclesRender.drawWaterMaskCircle(magicCircleData, waterMaskRenderType, poseStack, bufferSource);
         }
 
-        MagicCirclesRender.renderCircleForClient(magicCircleData, circleRenderType, poseStack, bufferSource, newPartialTick, !isUsingShaders);
+        MagicCirclesRender.drawCircle(magicCircleData, circleRenderType, poseStack, bufferSource, !isUsingShaders);
 
         poseStack.popPose();
 
         magicCircleData.setLastFullTicks(magicCircleData.getTicks() + newPartialTick);
     }
 
-    public static void renderCircleForClient(MagicCircleData magicCircleData,
-                                             RenderType renderType,
-                                             PoseStack poseStack,
-                                             MultiBufferSource bufferSource,
-                                             float newPartialTick,
-                                             boolean toUseAlwaysGlowingNormal) {
-/*        poseStack.pushPose();
-        EntitySnapshot caster = magicCircleData.caster;
-
-        magicCircleData.executeUntilFinalRenderTransforms(poseStack, caster, newPartialTick);
-        magicCircleData.executeFinalRenderTransforms(poseStack, caster, newPartialTick);
-        magicCircleData.executePermanentRenderTransforms(poseStack, caster, newPartialTick);*/
-
+    public static void drawCircle(MagicCircleData magicCircleData,
+                                  RenderType renderType,
+                                  PoseStack poseStack,
+                                  MultiBufferSource bufferSource,
+                                  boolean toUseAlwaysGlowingNormal) {
         float[] color = magicCircleData.getColor(true);
 
         Vector3f usedNormal;
@@ -238,22 +230,12 @@ public class MagicCirclesRender extends RenderType {
                 color[2],
                 color[3],
                 usedNormal);
-
-//        poseStack.popPose();
     }
 
-    public static void renderWaterMaskCircle(MagicCircleData magicCircleData,
-                                             RenderType renderType,
-                                             PoseStack poseStack,
-                                             MultiBufferSource bufferSource,
-                                             float newPartialTick) {
-/*        poseStack.pushPose();
-        EntitySnapshot caster = magicCircleData.caster;
-
-        magicCircleData.executeUntilFinalRenderTransforms(poseStack, caster, newPartialTick);
-        magicCircleData.executeFinalRenderTransforms(poseStack, caster, newPartialTick);
-        magicCircleData.executePermanentRenderTransforms(poseStack, caster, newPartialTick);*/
-
+    public static void drawWaterMaskCircle(MagicCircleData magicCircleData,
+                                           RenderType renderType,
+                                           PoseStack poseStack,
+                                           MultiBufferSource bufferSource) {
         Vector3f usedNormal = new Vector3f();
         poseStack.last().normal().transform(usedNormal);
         float[] color = magicCircleData.getColor(true);
@@ -261,8 +243,6 @@ public class MagicCirclesRender extends RenderType {
 
         VertexConsumer vc = bufferSource.getBuffer(renderType);
         RendererUtils.drawQuad(poseStack, vc, color[0], color[1], color[2], 1, usedNormal);
-
-//        poseStack.popPose();
     }
 
     public static void clearCache() {
@@ -278,7 +258,7 @@ public class MagicCirclesRender extends RenderType {
                     .setTransparencyState(RenderStateShard.NO_TRANSPARENCY)
                     .setCullState(RenderStateShard.NO_CULL)
                     .setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST)
-                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
+                    .setWriteMaskState(RenderStateShard.COLOR_DEPTH_WRITE)
                     .setOverlayState(RenderStateShard.NO_OVERLAY)
                     .setLightmapState(RenderStateShard.NO_LIGHTMAP)
                     .createCompositeState(false);
