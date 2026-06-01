@@ -3,6 +3,7 @@ package net.flameslight.magiccircles.datagen;
 import io.redspace.ironsspellbooks.api.registry.SpellRegistry;
 import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.spells.CastType;
+import io.redspace.ironsspellbooks.api.spells.SchoolType;
 import io.redspace.ironsspellbooks.capabilities.magic.SyncedSpellData;
 import io.redspace.ironsspellbooks.player.ClientMagicData;
 import net.flameslight.magiccircles.config.ConfigCache;
@@ -23,7 +24,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 import java.util.*;
 
 public class MagicCircleManager {
-    public record CastInfo(AbstractSpell spell, int castTime, CastType castType) {
+    public record CastInfo(AbstractSpell spell, int castTime, CastType castType, int circleType) {
     }
 
     public static final HashMap<UUID, MagicCircleData> CIRCLES_DATA_BY_ID = new HashMap<>();
@@ -81,12 +82,19 @@ public class MagicCircleManager {
             AbstractSpell spell = SpellRegistry.getSpell(spellId);
             int spellLevel = ClientMagicData.getCastingSpellLevel();
             int castDuration = spell.getCastTime(spellLevel);
+            SchoolType schoolType = spell.getSchoolType();
             CastType castType = spell.getCastType();
 
             if (isShortCastSpell(castDuration, castType))
                 return null;
 
-            return new CastInfo(spell, ClientMagicData.getCastDuration(), castType);
+            int circleType = ConfigCache.resolveCircleTypeOverwrite(spellId, schoolType, castDuration, castType);
+
+            // Filter disabled circles
+            if(isCircleRenderingDisabled(circleType))
+                return null;
+
+            return new CastInfo(spell, castDuration, castType, circleType);
         }
 
         // 2. Handle Remote Entities
@@ -108,6 +116,7 @@ public class MagicCircleManager {
 
         int spellLevel = syncedSpellData.getCastingSpellLevel();
         CastType castType = spell.getCastType();
+        SchoolType schoolType = spell.getSchoolType();
         int castDuration = spell.getCastTime(spellLevel);
 
         //Debug
@@ -118,11 +127,21 @@ public class MagicCircleManager {
         if (isShortCastSpell(castDuration, castType))
             return null;
 
-        return new CastInfo(spell, castDuration, castType);
+        int circleType = ConfigCache.resolveCircleTypeOverwrite(spellId, schoolType, castDuration, castType);
+
+        // Filter disabled circles
+        if(isCircleRenderingDisabled(circleType))
+            return null;
+
+        return new CastInfo(spell, castDuration, castType, circleType);
     }
 
     private static boolean isShortCastSpell(int castDuration, CastType castType) {
         return castType == CastType.INSTANT || castDuration <= MagicCircleFactory.HAND_CIRCLE_FADE_IN_TICKS;
+    }
+
+    private static boolean isCircleRenderingDisabled(int circleType) {
+        return circleType == 0;
     }
 
     private static void updateMagicCircleState(LivingEntity caster, ClientLevel clientLevel) {
@@ -149,12 +168,8 @@ public class MagicCircleManager {
                     MagicCircleManager.startMagicCircleTermination(caster, currentActiveCircle);
                 }
 
-                // ### Check if to render a new circle ###:
-                // Calculate properties for the *new* circle
-                int circleType = ConfigCache.resolveCircleTypeOverwrite(usedSpellName, castInfo);
-
-                // 2. Create the new circle and start fade in
-                createNewMagicCircle(caster, castInfo, usedSpellName, clientLevel, circleType);
+                // 2. Create the new circle and start fade in if type provided isn't zero
+                createNewMagicCircle(caster, castInfo, usedSpellName, clientLevel);
             } else {
                 // update circle entity position
                 updateMagicCircleEntityPosition(currentActiveCircle.ID, caster);
@@ -204,8 +219,7 @@ public class MagicCircleManager {
     private static void createNewMagicCircle(LivingEntity caster,
                                              CastInfo castInfo,
                                              String usedSpellName,
-                                             ClientLevel clientLevel,
-                                             int circleType) {
+                                             ClientLevel clientLevel) {
         MagicCircleEntity circleEntity = new MagicCircleEntity(ModEntities.MAGIC_CIRCLE.get(), clientLevel);
         circleEntity.setCaster(caster);
         UUID circleEntityUUID = circleEntity.getUUID();
@@ -218,8 +232,7 @@ public class MagicCircleManager {
                 usedSpellName,
                 caster,
                 castInfo,
-                circleEntityUUID,
-                circleType
+                circleEntityUUID
         );
 
         newCircle.startInitElseTermination(true);

@@ -2,31 +2,27 @@ package net.flameslight.magiccircles.config;
 
 import io.redspace.ironsspellbooks.api.spells.CastType;
 import io.redspace.ironsspellbooks.api.spells.SchoolType;
-import net.flameslight.magiccircles.datagen.MagicCircleManager;
 import net.flameslight.magiccircles.datagen.Utils;
 import net.flameslight.magiccircles.datagen.logger.ModLogger;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 
 import java.util.*;
 
 public class ConfigCache {
+    private static final String IRONS_NAMESPACE = "irons_spellbooks";
+
     // ── Cache fields ──────────────────────────────────────────────────────────
-
-    private static volatile Map<String, Integer> cachedSchoolColorOverrides = null;
-    private static volatile Map<String, Integer> cachedSpellColorOverrides = null;
-
-    private static volatile Map<String, Integer> cachedSchoolCircleOverrides = null;
-    private static volatile Map<String, Integer> cachedSpellCircleOverrides = null;
+    private static volatile Map<String, Integer> cachedColorOverrides = null;
+    private static volatile Map<String, Integer> cachedCircleOverrides = null;
 
     /**
      * Manually invalidates the cache.
      * Call this if you hot-reload the config at runtime from elsewhere.
      */
     public static void invalidateCache() {
-        cachedSchoolColorOverrides = null;
-        cachedSpellColorOverrides = null;
-        cachedSchoolCircleOverrides = null;
-        cachedSpellCircleOverrides = null;
+        cachedColorOverrides = null;
+        cachedCircleOverrides = null;
     }
 
     // ── Public resolution API ─────────────────────────────────────────────────
@@ -41,17 +37,15 @@ public class ConfigCache {
      * @param school    the {@link SchoolType} of the spell
      */
     public static int resolveColorOverwrite(String spellName, SchoolType school) {
-        ensureColorCacheBuilt();
-
         // Priority 1 – spell-name match
         if (spellName != null) {
-            Integer color = cachedSpellColorOverrides.get(normalizeKey(spellName));
+            Integer color = cachedColorOverrides.get(normalizeKey(spellName));
             if (color != null) return color;
         }
 
         // Priority 2 – school-name match
         if (school != null) {
-            Integer color = cachedSchoolColorOverrides.get(schoolKey(school));
+            Integer color = cachedColorOverrides.get(schoolKey(school));
             if (color != null) return color;
         }
 
@@ -63,48 +57,49 @@ public class ConfigCache {
      * {@code TEXTURES_PER_SIZE} / {@code TEXTURES_NEON_PER_SIZE}) for the given
      * spell/school pair, or time-type based as explained in the mod page if no override is configured.
      *
-     * @param spellName the full spell ResourceLocation string
-     * @param castInfo  the {@link MagicCircleManager.CastInfo} of the spell
      */
-    public static int resolveCircleTypeOverwrite(String spellName, MagicCircleManager.CastInfo castInfo) {
+    public static int resolveCircleTypeOverwrite(String spellId,
+                                                 SchoolType school,
+                                                 int castTime,
+                                                 CastType castType) {
         Integer idx;
 
         // Priority 1 – spell-name match
-        if (spellName != null) {
-            idx = cachedSpellCircleOverrides.get(normalizeKey(spellName));
+        if (spellId != null) {
+            idx = cachedCircleOverrides.get(normalizeKey(spellId));
             if (idx != null) return idx;
         }
 
         // Priority 2 – school-name match
-        SchoolType school = castInfo.spell().getSchoolType();
-        idx = cachedSchoolCircleOverrides.get(schoolKey(school));
+        idx = cachedCircleOverrides.get(schoolKey(school));
         if (idx != null) return idx;
 
-        return resolveCircleTypeByCastTimeAndType(castInfo.castTime(), castInfo.castType());
+        return resolveCircleTypeByCastTimeAndType(castTime, castType);
     }
 
     private static int resolveCircleTypeByCastTimeAndType(int totalCastTime, CastType castType) {
-        int circleType = Mth.clamp((totalCastTime / 20 - 1), 0, 4);
+        int circleType = Mth.clamp((totalCastTime / 20 + 1), 1, 5);
 
         if (castType != CastType.LONG)
-            circleType = Math.min(2, circleType);
+            circleType = Math.min(3, circleType);
 
         return circleType;
     }
 
     // ── Lazy cache builders ───────────────────────────────────────────────────
 
-    private static void ensureColorCacheBuilt() {
-        if (cachedSchoolColorOverrides != null) return; // fast path – already built
+    public static void ensureColorCacheBuilt() {
+        if (cachedColorOverrides != null) return; // fast path – already built
 
-        Map<String, Integer> schoolMap = new HashMap<>();
-        Map<String, Integer> spellMap = new HashMap<>();
+        List<? extends String> originalEntries = ClientConfig.COLOR_OVERWRITES.get();
+        List<String> correctedEntries = new ArrayList<>(originalEntries);
+        boolean anyKeyCorrection = false;
+        Map<String, Integer> map = new HashMap<>();
 
-        List<? extends String> entries = ClientConfig.COLOR_OVERWRITES.get();
-        for (String entry : entries) {
+        for (int i = 0; i < originalEntries.size(); i++) {
+            String entry = originalEntries.get(i);
             int commaIdx = entry.indexOf(',');
             if (commaIdx < 0) {
-                // Passes String validator but has no ',' — warn and skip
                 ModLogger.warn("[magiccircles-config] colorOverwrites: entry \"{}\" has no ',' separator, skipping.", entry);
                 continue;
             }
@@ -112,32 +107,46 @@ public class ConfigCache {
             String key = normalizeKey(entry.substring(0, commaIdx));
             String rawValue = entry.substring(commaIdx + 1).trim();
 
+            // Auto-correct bare names (no namespace) by prepending the Iron's Spells namespace.
+            // The corrected value is written back to the config file so the user sees the full RL.
+            if (!isValidResourceLocation(key)) {
+                String correctedKey = IRONS_NAMESPACE + ":" + key;
+                String correctedEntry = correctedKey + "," + rawValue;
+                ModLogger.info("[magiccircles-config] colorOverwrites: entry \"{}\" — key '{}' has no namespace; "
+                                + "auto-correcting to \"{}\". The config file will be updated.",
+                        entry, key, correctedEntry);
+                correctedEntries.set(i, correctedEntry);
+                key = correctedKey;
+                anyKeyCorrection = true;
+            }
+
             OptionalInt colorOpt = parseHexColor(rawValue, entry);
             if (colorOpt.isEmpty()) continue; // error already logged in parseHexColor
 
-            // Later entries overwrite earlier ones for the same key → "last wins" behaviour
-            if (isSpellKey(key)) spellMap.put(key, colorOpt.getAsInt());
-            else schoolMap.put(key, colorOpt.getAsInt());
+            map.put(key, colorOpt.getAsInt()); // later entries overwrite earlier → last wins
         }
 
-        // Publish both maps atomically relative to each other.
-        // Another thread may see null → build redundantly, which is harmless because
-        // both builds read the same config and produce identical results.
-        cachedSpellColorOverrides = Collections.unmodifiableMap(spellMap);
-        cachedSchoolColorOverrides = Collections.unmodifiableMap(schoolMap);
+        // Write corrected entries back so the config file on disk reflects the full RLs.
+        // Only called when at least one key was missing a namespace.
+        if (anyKeyCorrection)
+            ClientConfig.COLOR_OVERWRITES.set(correctedEntries);
+
+        cachedColorOverrides = Collections.unmodifiableMap(map);
 
 /*        ModLogger.info("[magiccircles-config] Color overwrite cache built – {} school entries, {} spell entries.",
                 schoolMap.size(), spellMap.size());*/
     }
 
     public static void ensureCircleCacheBuilt() {
-        if (cachedSchoolCircleOverrides != null) return;
+        if (cachedCircleOverrides != null) return;
 
-        Map<String, Integer> schoolMap = new HashMap<>();
-        Map<String, Integer> spellMap = new HashMap<>();
+        List<? extends String> originalEntries = ClientConfig.CIRCLE_TYPE_OVERWRITES.get();
+        List<String> correctedEntries = new ArrayList<>(originalEntries);
+        boolean anyKeyCorrection = false;
+        Map<String, Integer> map = new HashMap<>();
 
-        List<? extends String> entries = ClientConfig.CIRCLE_TYPE_OVERWRITES.get();
-        for (String entry : entries) {
+        for (int i = 0; i < originalEntries.size(); i++) {
+            String entry = originalEntries.get(i);
             int commaIdx = entry.indexOf(',');
             if (commaIdx < 0) {
                 ModLogger.warn("[magiccircles-config] circleTypeOverwrites: entry \"{}\" has no ',' separator, skipping.", entry);
@@ -146,6 +155,19 @@ public class ConfigCache {
 
             String key = normalizeKey(entry.substring(0, commaIdx));
             String rawValue = entry.substring(commaIdx + 1).trim();
+
+            // Auto-correct bare names (no namespace) by prepending the Iron's Spells namespace.
+            // The corrected value is written back to the config file so the user sees the full RL.
+            if (!isValidResourceLocation(key)) {
+                String correctedKey = IRONS_NAMESPACE + ":" + key;
+                String correctedEntry = correctedKey + "," + rawValue;
+                ModLogger.warn("[magiccircles-config] circleTypeOverwrites: entry \"{}\" — key '{}' has no namespace; "
+                                + "auto-correcting to \"{}\". The config file will be updated.",
+                        entry, key, correctedEntry);
+                correctedEntries.set(i, correctedEntry);
+                key = correctedKey;
+                anyKeyCorrection = true;
+            }
 
             int circleType;
             try {
@@ -156,20 +178,15 @@ public class ConfigCache {
                 continue;
             }
 
-            if (circleType < 1 || circleType > 5) {
-                ModLogger.warn("[magiccircles-config] circleTypeOverwrites: circle type {} in entry \"{}\" is outside [1-5]; clamping.",
-                        circleType, entry);
-                circleType = Mth.clamp(circleType, 1, 5);
-            }
-
-            circleType = circleType - 1; // user-visible 1-5  →  internal 0-4
-
-            if (isSpellKey(key)) spellMap.put(key, circleType);
-            else schoolMap.put(key, circleType);
+            map.put(key, circleType);
         }
 
-        cachedSpellCircleOverrides = Collections.unmodifiableMap(spellMap);
-        cachedSchoolCircleOverrides = Collections.unmodifiableMap(schoolMap);
+        // Write corrected entries back so the config file on disk reflects the full RLs.
+        // Only called when at least one key was missing a namespace.
+        if (anyKeyCorrection)
+            ClientConfig.CIRCLE_TYPE_OVERWRITES.set(correctedEntries);
+
+        cachedCircleOverrides = Collections.unmodifiableMap(map);
 
 /*        ModLogger.info("[magiccircles-config] Circle-type overwrite cache built – {} school entries, {} spell entries.",
                 schoolMap.size(), spellMap.size());*/
@@ -178,11 +195,11 @@ public class ConfigCache {
     // ── Private helpers ───────────────────────────────────────────────────────
 
     /**
-     * A key is treated as a spell ResourceLocation when it contains {@code ':'}
-     * (e.g. {@code "irons_spellbooks:fireball"}).  A key without {@code ':'}
-     * (e.g. {@code "fire"}) is treated as a school name.
+     * Returns {@code true} when {@code normalizedKey} is a full ResourceLocation
+     * (contains {@code ':'}), i.e. has both a namespace and a path.
+     * Bare names like {@code "fire"} fail this check and will be auto-corrected.
      */
-    private static boolean isSpellKey(String normalizedKey) {
+    private static boolean isValidResourceLocation(String normalizedKey) {
         return normalizedKey.contains(":");
     }
 
@@ -194,18 +211,21 @@ public class ConfigCache {
     }
 
     /**
-     * Returns the cache key for a {@link SchoolType}.
+     * Returns the normalised ResourceLocation string for a {@link SchoolType},
+     * used as the cache lookup key for school-based overwrites
+     * (e.g. {@code "irons_spellbooks:fire"}).
      *
-     * <p>Uses the school's English display name in lower-case (e.g. {@code "fire"},
-     * {@code "ice"}, {@code "lightning"}).  Config entries must match the
-     * <em>English</em> display name regardless of the active game language.</p>
-     *
-     * <p><strong>Iron's Spells tip:</strong> if {@code SchoolType} exposes a
-     * locale-independent ID accessor — e.g. {@code school.getId().getPath()} or
-     * {@code school.getRegistryName().getPath()} — prefer that over
-     * {@code getDisplayName().getString()} to avoid any translation dependency.</p>
+     * <p>Uses {@code school.getRegistryName()}.  If your version of Iron's Spells
+     * does not expose that method, try {@code school.getId()} as an alternative.</p>
      */
     private static String schoolKey(SchoolType school) {
+        ResourceLocation rl = school.getId();
+        if (rl != null) {
+            return rl.toString().toLowerCase(Locale.ROOT);
+        }
+        // Should never be reached for a properly registered SchoolType.
+        ModLogger.warn("[magiccircles-config] SchoolType '{}' has no registry name; school-based overwrites will not match for this school.",
+                school.getDisplayName().getString());
         return school.getDisplayName().getString().trim().toLowerCase(Locale.ROOT);
     }
 

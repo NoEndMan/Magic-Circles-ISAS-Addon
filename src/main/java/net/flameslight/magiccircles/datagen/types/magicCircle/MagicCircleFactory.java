@@ -13,6 +13,7 @@ import net.flameslight.magiccircles.datagen.types.transformations.render.RenderA
 import net.flameslight.magiccircles.datagen.types.transformations.data.DataTransformAnimations;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 
 import java.util.UUID;
@@ -49,8 +50,8 @@ public class MagicCircleFactory {
     public static MagicCircleData buildMagicCircleData(String spellName,
                                                        LivingEntity caster,
                                                        MagicCircleManager.CastInfo castInfo,
-                                                       UUID circleEntityUUID,
-                                                       int circleType) {
+                                                       UUID circleEntityUUID) {
+        int circleType = Mth.clamp(castInfo.circleType() - 1, 0, 4);
         AbstractSpell spell = castInfo.spell();
         ResourceLocation usedTexture;
 

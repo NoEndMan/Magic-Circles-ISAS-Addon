@@ -5,10 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.1] - WIP
+## [1.2.1] - 2026-06-02
 ### Added
-- new config parameters - circle type overwrite and color type overwrite, to allow to change color of circles or how 
-rendered per magic school or spell name. 
+- new config parameters - circle type overwrite and color type overwrite. Allows changes like:
+1. change color of circles per spell id or school id
+2. change type of magic circle rendered per spell id or school id (only available for non-instant type spells)
+3. disable rendering of magic circle per spell id or school id
 
 ## [1.2.0] - 2026-05-31
 ### Changed

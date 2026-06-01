@@ -28,6 +28,7 @@ public class ClientEvents {
     public static void onClientLogin(ClientPlayerNetworkEvent.LoggingIn event) {
         ConfigCache.invalidateCache();
         ConfigCache.ensureCircleCacheBuilt();
+        ConfigCache.ensureColorCacheBuilt();
     }
 
     @SubscribeEvent
