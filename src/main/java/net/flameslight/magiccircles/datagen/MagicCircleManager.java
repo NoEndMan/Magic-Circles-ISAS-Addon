@@ -5,6 +5,7 @@ import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.spells.CastType;
 import io.redspace.ironsspellbooks.capabilities.magic.SyncedSpellData;
 import io.redspace.ironsspellbooks.player.ClientMagicData;
+import net.flameslight.magiccircles.config.ConfigCache;
 import net.flameslight.magiccircles.datagen.entity.MagicCircleEntity;
 import net.flameslight.magiccircles.datagen.logger.ModLogger;
 import net.flameslight.magiccircles.datagen.registery.ModEntities;
@@ -12,6 +13,7 @@ import net.flameslight.magiccircles.datagen.types.magicCircle.MagicCircleData;
 import net.flameslight.magiccircles.datagen.types.magicCircle.MagicCircleFactory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -147,8 +149,12 @@ public class MagicCircleManager {
                     MagicCircleManager.startMagicCircleTermination(caster, currentActiveCircle);
                 }
 
+                // ### Check if to render a new circle ###:
+                // Calculate properties for the *new* circle
+                int circleType = ConfigCache.resolveCircleTypeOverwrite(usedSpellName, castInfo);
+
                 // 2. Create the new circle and start fade in
-                createNewMagicCircle(caster, castInfo, usedSpellName, clientLevel);
+                createNewMagicCircle(caster, castInfo, usedSpellName, clientLevel, circleType);
             } else {
                 // update circle entity position
                 updateMagicCircleEntityPosition(currentActiveCircle.ID, caster);
@@ -198,7 +204,8 @@ public class MagicCircleManager {
     private static void createNewMagicCircle(LivingEntity caster,
                                              CastInfo castInfo,
                                              String usedSpellName,
-                                             ClientLevel clientLevel) {
+                                             ClientLevel clientLevel,
+                                             int circleType) {
         MagicCircleEntity circleEntity = new MagicCircleEntity(ModEntities.MAGIC_CIRCLE.get(), clientLevel);
         circleEntity.setCaster(caster);
         UUID circleEntityUUID = circleEntity.getUUID();
@@ -211,12 +218,9 @@ public class MagicCircleManager {
                 usedSpellName,
                 caster,
                 castInfo,
-                circleEntityUUID
+                circleEntityUUID,
+                circleType
         );
-
-
-        // newCircle should never be null, if so then this is a code bug
-        assert newCircle != null;
 
         newCircle.startInitElseTermination(true);
         CIRCLES_IDS_BY_CASTER.put(caster, circleEntityUUID);

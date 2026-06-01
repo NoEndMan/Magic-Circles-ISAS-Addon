@@ -5,8 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2026-05-31
+## [1.2.1] - WIP
+### Added
+- new config parameters - circle type overwrite and color type overwrite, to allow to change color of circles or how 
+rendered per magic school or spell name. 
 
+## [1.2.0] - 2026-05-31
 ### Changed
 - Circles are now centered to the client cursor and for other entities, to the caster head, by default. 
 (Applied when the mod config file is created. Circle offset is changeable using the mod config).

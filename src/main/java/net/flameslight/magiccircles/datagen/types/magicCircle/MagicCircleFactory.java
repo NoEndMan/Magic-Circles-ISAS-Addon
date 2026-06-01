@@ -2,8 +2,8 @@ package net.flameslight.magiccircles.datagen.types.magicCircle;
 
 import io.redspace.ironsspellbooks.api.spells.AbstractSpell;
 import io.redspace.ironsspellbooks.api.spells.CastType;
-import io.redspace.ironsspellbooks.api.spells.SchoolType;
 import net.flameslight.magiccircles.config.ClientConfig;
+import net.flameslight.magiccircles.config.ConfigCache;
 import net.flameslight.magiccircles.datagen.MagicCircleManager;
 import net.flameslight.magiccircles.datagen.Utils;
 import net.flameslight.magiccircles.datagen.render.MagicCirclesRender;
@@ -12,10 +12,7 @@ import net.flameslight.magiccircles.datagen.types.transformations.TransformManag
 import net.flameslight.magiccircles.datagen.types.transformations.render.RenderAnimations;
 import net.flameslight.magiccircles.datagen.types.transformations.data.DataTransformAnimations;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.network.chat.Style;
-import net.minecraft.network.chat.TextColor;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 
 import java.util.UUID;
@@ -52,38 +49,27 @@ public class MagicCircleFactory {
     public static MagicCircleData buildMagicCircleData(String spellName,
                                                        LivingEntity caster,
                                                        MagicCircleManager.CastInfo castInfo,
-                                                       UUID circleEntityUUID) {
+                                                       UUID circleEntityUUID,
+                                                       int circleType) {
         AbstractSpell spell = castInfo.spell();
-        int totalCastTime = castInfo.castTime();
-        CastType castType = castInfo.castType();
-
-        // Calculate properties for the *new* circle
-        int sizeIndex = Mth.clamp((totalCastTime / 20 - 1), 0, 4);
-
-        if(sizeIndex < 0 || sizeIndex >= TEXTURES_PER_SIZE.length)
-            return null;
-
-        if(castType != CastType.LONG)
-            sizeIndex = Math.min(2, sizeIndex);
-
         ResourceLocation usedTexture;
 
         if(MagicCirclesRender.usedStyleInCache == CirclesStyle.NEON) {
-            usedTexture = TEXTURES_NEON_PER_SIZE[sizeIndex];
+            usedTexture = TEXTURES_NEON_PER_SIZE[circleType];
         } else {
-            usedTexture = TEXTURES_PER_SIZE[sizeIndex];
+            usedTexture = TEXTURES_PER_SIZE[circleType];
         }
 
         TransformManager animationManager = new TransformManager();
-        float usedSize = SIZE_INDEX_BY_TIME[sizeIndex];
+        float usedSize = SIZE_INDEX_BY_TIME[circleType];
         float xOffset, zOffset, yOffset;
         float rotationChangePerTick;
         int usedFadeInTicks, usedFadeOutTicks;
-        int color = getColorFromSchool(spell.getSchoolType());
+        int color = ConfigCache.resolveColorOverwrite(spellName, spell.getSchoolType());
         float[] colorRGB = Utils.extractRGBFromHexColor(color);
         float[] brighterColor = Utils.brighten(colorRGB[0], colorRGB[1], colorRGB[2], 0.2f);
 
-        if (sizeIndex > 2) {
+        if (circleType > 2) {
             // --- Under Player ---
             if(caster instanceof LocalPlayer) {
                 yOffset = ClientConfig.Y_OFFSET_FROM_PLAYER_BOTTOM.get().floatValue();
@@ -99,7 +85,7 @@ public class MagicCircleFactory {
             rotationChangePerTick = 5f;
 
             int targetSizeScaling;
-            if(sizeIndex == 4) {
+            if(circleType == 4) {
                 targetSizeScaling = 30;
             } else {
                 targetSizeScaling = 16;
@@ -162,17 +148,5 @@ public class MagicCircleFactory {
                 usedFadeInTicks,
                 usedFadeOutTicks,
                 circleEntityUUID);
-    }
-
-    private static int getColorFromSchool(SchoolType school) {
-        if (school == null) return 0xFFFFFF;
-
-        // Get the Component (Name) -> Get Style -> Get TextColor
-        Style style = school.getDisplayName().getStyle();
-        TextColor textColor = style.getColor();
-
-        return textColor != null
-                ? textColor.getValue()
-                : 0xFFFFFF;
     }
 }

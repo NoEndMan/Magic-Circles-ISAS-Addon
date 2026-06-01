@@ -1,5 +1,8 @@
 package net.flameslight.magiccircles.datagen;
 
+import io.redspace.ironsspellbooks.api.spells.SchoolType;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.util.Mth;
 
 public class Utils {
@@ -138,5 +141,17 @@ public class Utils {
         else                { r = c; g = 0; b = x; }
 
         return new float[]{ r + m, g + m, b + m };
+    }
+
+    public static int getColorFromSchool(SchoolType school) {
+        if (school == null) return 0xFFFFFF;
+
+        // Get the Component (Name) -> Get Style -> Get TextColor
+        Style style = school.getDisplayName().getStyle();
+        TextColor textColor = style.getColor();
+
+        return textColor != null
+                ? textColor.getValue()
+                : 0xFFFFFF;
     }
 }

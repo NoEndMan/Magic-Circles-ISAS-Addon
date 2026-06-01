@@ -1,6 +1,7 @@
 package net.flameslight.magiccircles.datagen.events;
 
 import net.flameslight.magiccircles.MagicCircles;
+import net.flameslight.magiccircles.config.ConfigCache;
 import net.flameslight.magiccircles.datagen.MagicCircleManager;
 import net.flameslight.magiccircles.datagen.render.MagicCirclesRender;
 import net.flameslight.magiccircles.oculus.OculusCompact;
@@ -24,9 +25,16 @@ public class ClientEvents {
     }
 
     @SubscribeEvent
+    public static void onClientLogin(ClientPlayerNetworkEvent.LoggingIn event) {
+        ConfigCache.invalidateCache();
+        ConfigCache.ensureCircleCacheBuilt();
+    }
+
+    @SubscribeEvent
     public static void onClientLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         MagicCircleManager.handleClientLeaving();
         MagicCirclesRender.clearCache();
+        ConfigCache.invalidateCache();
     }
 
     @SubscribeEvent
