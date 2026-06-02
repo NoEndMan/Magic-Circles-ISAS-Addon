@@ -111,7 +111,9 @@ public class ClientConfig {
                 "NOTE: If any list element is not a string, the ENTIRE list is rejected by the",
                 "      config system and reverts to its default (empty list)."
         );
-        COLOR_OVERWRITES = builder.defineList(
+        COLOR_OVERWRITES = builder
+                .worldRestart()
+                .defineList(
                 "colorOverwrites",
                 Collections.emptyList(),
                 obj -> obj instanceof String   // non-String elements are rejected at config load; format is validated at runtime
@@ -156,7 +158,9 @@ public class ClientConfig {
                 "NOTE: If any list element is not a string, the ENTIRE list is rejected by the",
                 "      config system and reverts to its default (empty list)."
         );
-        CIRCLE_TYPE_OVERWRITES = builder.defineList(
+        CIRCLE_TYPE_OVERWRITES = builder
+                .worldRestart()
+                .defineList(
                 "circleTypeOverwrites",
                 Collections.emptyList(),
                 obj -> obj instanceof String
