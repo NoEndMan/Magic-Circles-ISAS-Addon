@@ -78,7 +78,7 @@ public class ConfigCache {
     }
 
     private static int resolveCircleTypeByCastTimeAndType(int totalCastTime, CastType castType) {
-        int circleType = Mth.clamp((totalCastTime / 20 + 1), 1, 5);
+        int circleType = Mth.clamp((totalCastTime / 20), 1, 5);
 
         if (castType != CastType.LONG)
             circleType = Math.min(3, circleType);

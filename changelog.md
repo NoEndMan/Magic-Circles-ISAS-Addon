@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.1] - 2026-06-02
 ### Added
-- new config parameters - circle type overwrite and color type overwrite. Allows changes like:
+- new client config parameters - circle type overwrite and color type overwrite. Allows changes like: 
 1. change color of circles per spell id or school id
 2. change type of magic circle rendered per spell id or school id (only available for non-instant type spells)
 3. disable rendering of magic circle per spell id or school id
