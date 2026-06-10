@@ -20,4 +20,7 @@ public class ModEntities {
                             .updateInterval(Integer.MAX_VALUE) // Never sync (client only)
                             .build("magic_circle")
             );
+
+    // This variable will hold our permanent reference, surviving the server sync wipe
+    public static EntityType<MagicCircleEntity> CACHED_MAGIC_CIRCLE;
 }

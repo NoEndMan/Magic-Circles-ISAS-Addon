@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2] - 2026-06-10
+### Fixed
+- game crushing on the client side when entering a minecraft server 
+
 ## [1.2.1] - 2026-06-02
 ### Added
 - new client config parameters - circle type overwrite and color type overwrite. Allows changes like: 

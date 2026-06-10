@@ -220,7 +220,7 @@ public class MagicCircleManager {
                                              CastInfo castInfo,
                                              String usedSpellName,
                                              ClientLevel clientLevel) {
-        MagicCircleEntity circleEntity = new MagicCircleEntity(ModEntities.MAGIC_CIRCLE.get(), clientLevel);
+        MagicCircleEntity circleEntity = new MagicCircleEntity(ModEntities.CACHED_MAGIC_CIRCLE, clientLevel);
         circleEntity.setCaster(caster);
         UUID circleEntityUUID = circleEntity.getUUID();
 
